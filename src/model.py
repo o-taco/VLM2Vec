@@ -138,8 +138,9 @@ class MMEBModel(nn.Module):
         print_master(f'Loading backbone [{model_backbone}]')
 
         if model_args.model_backbone in {LLAVA_NEXT, QWEN2_VL, QWEN2_5_VL}:
-            config._attn_implementation = "flash_attention_2"
-            config.vision_config._attn_implementation = "flash_attention_2"
+            # Volta (sm_70, e.g. V100) has no FlashAttention-2 support; sdpa runs everywhere.
+            config._attn_implementation = "sdpa"
+            config.vision_config._attn_implementation = "sdpa"
             base_model = backbone2model[model_args.model_backbone].from_pretrained(
                 model_args.model_name,
                 torch_dtype=torch.bfloat16,
