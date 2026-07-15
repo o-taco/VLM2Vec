@@ -108,7 +108,9 @@ class MMEBModel(nn.Module):
                 target_modules=model_args.lora_target_modules.split(','),
                 lora_dropout=model_args.lora_dropout,
                 init_lora_weights="gaussian",
-                use_dora=True,
+                # DoRA causes a no-grad/dead-gradient bug on this training path (found empirically
+                # in the prior Colab run on the V2 codebase); plain LoRA trains correctly.
+                use_dora=False,
                 inference_mode=False
             )
             lora_model = get_peft_model(base_model, lora_config)
