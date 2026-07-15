@@ -22,6 +22,10 @@ def process_image(image, resolution, max_dim=1344):
         image = image.resize((672, 672))
     elif resolution == "low":
         image = image.resize((128, 128))
+    elif resolution.isdigit():
+        # explicit pixel size, e.g. "336" (matches the prior working run's fixed-size crop)
+        dim = int(resolution)
+        image = image.resize((dim, dim))
     else:
         cur_max_dim = max(image.size)
         if cur_max_dim > max_dim:

@@ -24,7 +24,9 @@ def process_vlm_inputs(model_inputs: dict, processor, backbone_name, max_length=
     for text, image in zip(texts, images):
         if image is None:
             if backbone_name == LLAVA_NEXT:
-                inputs = processor(images=None, text=text, return_tensors="np", max_length=max_length, truncation=True)
+                # truncation=False: with max_len=512 and ~576 image tokens from a 336x336 crop,
+                # truncating would silently cut off image tokens (found empirically in the prior run).
+                inputs = processor(images=None, text=text, return_tensors="np", max_length=max_length, truncation=False)
             elif backbone_name == QWEN2_VL:
                 inputs = processor(text=[text], images=None, return_tensors="np", max_length=max_length, truncation=True)
             elif backbone_name == PHI3V:
@@ -40,7 +42,8 @@ def process_vlm_inputs(model_inputs: dict, processor, backbone_name, max_length=
         else:
             image_exists = True
             if backbone_name == LLAVA_NEXT:
-                inputs = processor(images=image, text=text, return_tensors="np", max_length=max_length, truncation=True)
+                # truncation=False: see note above.
+                inputs = processor(images=image, text=text, return_tensors="np", max_length=max_length, truncation=False)
             elif backbone_name == QWEN2_VL:
                 inputs = processor(images=[image], text=[text], return_tensors="np", max_length=max_length, truncation=True)
             elif backbone_name == PHI3V:
