@@ -512,7 +512,10 @@ class MMEBTrainer(Trainer):
                 self.control.should_training_stop = True
 
             self.control = self.callback_handler.on_epoch_end(args, self.state, self.control)
-            self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval, start_time=time.time())
+            # transformers==4.46.3's real _maybe_log_save_evaluate (unmodified, inherited from
+            # the base Trainer) doesn't take start_time -- this vendored loop was copied from a
+            # different transformers version than the one actually pinned in requirements.txt.
+            self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval)
 
             if self.control.should_training_stop:
                 break
@@ -602,7 +605,11 @@ class GradCacheTrainer(MMEBTrainer):
         queries, passages = inputs
         queries, passages = {'qry': queries}, {'tgt': passages}
 
-        _distributed = self.args.local_rank > -1
+        # local_rank is 0 (not -1) for a single non-distributed process under
+        # this transformers version (derived from accelerate's process state),
+        # so it can't distinguish "distributed" from "single GPU". world_size
+        # is the reliable check: DDP wrapping only actually happens when >1.
+        _distributed = self.args.world_size > 1
         self.gc.models = [model, model]
         loss = self.gc(queries, passages, no_sync_except_last=_distributed)
 
@@ -662,7 +669,9 @@ class GradCacheLateProcessTrainer(MMEBTrainer):
         queries, targets = inputs
         queries, targets = {'qry': queries}, {'tgt': targets}
 
-        _distributed = self.args.local_rank > -1
+        # See note in the other training_step above: world_size, not
+        # local_rank, is the reliable single-vs-distributed check here.
+        _distributed = self.args.world_size > 1
         self.gc.models = [model, model]
         loss = self.gc(queries, targets, no_sync_except_last=_distributed)
 
