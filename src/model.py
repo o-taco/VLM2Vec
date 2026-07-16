@@ -26,12 +26,19 @@ class MMEBModel(nn.Module):
         self.normalize = normalize
         self.temperature = temperature
         self.cross_entropy = nn.CrossEntropyLoss(reduction='mean')
+
+    def gradient_checkpointing_enable(self, **kwargs):
+        self.encoder.gradient_checkpointing_enable(**kwargs)
         self.is_ddp = dist.is_initialized()
         if self.is_ddp:
             self.process_rank = dist.get_rank()
             self.world_size = dist.get_world_size()
 
     def encode_input(self, input):
+        # grad_cache's manual chunked forward bypasses Trainer's usual input-to-device
+        # step, so collator output (CPU tensors) never gets moved to the model's device.
+        device = next(self.encoder.parameters()).device
+        input = {k: (v.to(device) if torch.is_tensor(v) else v) for k, v in input.items()}
         hidden_states = self.encoder(**input, return_dict=True, output_hidden_states=True)
         hidden_states = hidden_states.hidden_states[-1]
         pooled_output = self._pooling(hidden_states, input['attention_mask'])
