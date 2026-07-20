@@ -5,9 +5,10 @@ from torch import nn, Tensor
 from transformers import PreTrainedModel, AutoModelForCausalLM, AutoConfig
 from peft import LoraConfig, get_peft_model, PeftModel
 from src.arguments import ModelArguments, TrainingArguments
-from src.model_utils import LLAVA_NEXT, QWEN2_VL, PHI3V, get_backbone_name, print_master, QWEN2_5_VL, backbone2model
+from src.model_utils import LLAVA_NEXT, QWEN2_VL, PHI3V, get_backbone_name, print_master, QWEN2_5_VL, QWEN3_VL, backbone2model
 from src.vlm_backbone.phi3_v.modeling_phi3_v import Phi3VForCausalLM
 from src.vlm_backbone.llava_next import LlavaNextForConditionalGeneration
+from src.vlm_backbone.qwen3_vl import patch_vision_patch_embed_for_volta
 
 
 class MMEBModel(nn.Module):
@@ -99,6 +100,19 @@ class MMEBModel(nn.Module):
                 torch_dtype=torch.bfloat16,
                 low_cpu_mem_usage=True,
             )
+        elif model_backbone == QWEN3_VL:
+            # Volta (sm_70, e.g. V100) has no FlashAttention-2 support; sdpa runs everywhere.
+            config._attn_implementation = "sdpa"
+            config.vision_config._attn_implementation = "sdpa"
+            config.padding_side = "left"
+            config.use_cache = False
+            base_model = backbone2model[model_backbone].from_pretrained(
+                model_args.model_name,
+                config=config,
+                torch_dtype=torch.bfloat16,
+                low_cpu_mem_usage=True,
+            )
+            patch_vision_patch_embed_for_volta(base_model)
         else:
             config.use_cache = False
             base_model = cls.TRANSFORMER_CLS.from_pretrained(
@@ -146,7 +160,7 @@ class MMEBModel(nn.Module):
         setattr(model_args, 'model_backbone', model_backbone)
         print_master(f'Loading backbone [{model_backbone}]')
 
-        if model_args.model_backbone in {LLAVA_NEXT, QWEN2_VL, QWEN2_5_VL}:
+        if model_args.model_backbone in {LLAVA_NEXT, QWEN2_VL, QWEN2_5_VL, QWEN3_VL}:
             # Volta (sm_70, e.g. V100) has no FlashAttention-2 support; sdpa runs everywhere.
             config._attn_implementation = "sdpa"
             config.vision_config._attn_implementation = "sdpa"
@@ -155,6 +169,8 @@ class MMEBModel(nn.Module):
                 torch_dtype=torch.bfloat16,
                 config=config
             )
+            if model_args.model_backbone == QWEN3_VL:
+                patch_vision_patch_embed_for_volta(base_model)
         elif model_args.model_backbone == PHI3V:
             # Loading the base model
             config = AutoConfig.from_pretrained(model_args.model_name, trust_remote_code=True)

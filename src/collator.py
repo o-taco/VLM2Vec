@@ -7,7 +7,7 @@ from transformers import ProcessorMixin, AutoProcessor, AutoTokenizer
 from src.arguments import DataArguments, ModelArguments
 import torch
 
-from src.model_utils import LLAVA_NEXT, QWEN2_VL, PHI3V, process_vlm_inputs_fns
+from src.model_utils import LLAVA_NEXT, QWEN2_VL, QWEN3_VL, PHI3V, process_vlm_inputs_fns
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,10 @@ def process_vlm_inputs(model_inputs: dict, processor, backbone_name, max_length=
                 inputs = processor(images=None, text=text, return_tensors="np", max_length=max_length, truncation=False)
             elif backbone_name == QWEN2_VL:
                 inputs = processor(text=[text], images=None, return_tensors="np", max_length=max_length, truncation=True)
+            elif backbone_name == QWEN3_VL:
+                # the native qwen3_vl image processor is "fast" (torch-only) and no
+                # longer accepts return_tensors="np" -- request "pt" and convert.
+                inputs = processor(text=[text], images=None, return_tensors="pt", max_length=max_length, truncation=True)
             elif backbone_name == PHI3V:
                 inputs = processor(text, None, return_tensors="np", max_length=max_length, truncation=True)
             input_id = inputs["input_ids"].squeeze().tolist()
@@ -46,14 +50,20 @@ def process_vlm_inputs(model_inputs: dict, processor, backbone_name, max_length=
                 inputs = processor(images=image, text=text, return_tensors="np", max_length=max_length, truncation=False)
             elif backbone_name == QWEN2_VL:
                 inputs = processor(images=[image], text=[text], return_tensors="np", max_length=max_length, truncation=True)
+            elif backbone_name == QWEN3_VL:
+                inputs = processor(images=[image], text=[text], return_tensors="pt", max_length=max_length, truncation=True)
             elif backbone_name == PHI3V:
                 inputs = processor(text=text, images=[image], return_tensors="np", max_length=max_length, truncation=True)
             input_ids.append(inputs["input_ids"].squeeze().tolist())
-            pixel_values.append(inputs['pixel_values'])
-            if 'image_sizes' in inputs:
-                image_sizes.append(inputs['image_sizes'])
-            if 'image_grid_thw' in inputs:
-                image_grid_thw.append(inputs['image_grid_thw'])
+            if backbone_name == QWEN3_VL:
+                pixel_values.append(inputs['pixel_values'].numpy())
+                image_grid_thw.append(inputs['image_grid_thw'].numpy())
+            else:
+                pixel_values.append(inputs['pixel_values'])
+                if 'image_sizes' in inputs:
+                    image_sizes.append(inputs['image_sizes'])
+                if 'image_grid_thw' in inputs:
+                    image_grid_thw.append(inputs['image_grid_thw'])
 
     # 2. padding inputs
     batch_encoding = processor.tokenizer.pad({'input_ids': input_ids}, return_tensors="pt")
@@ -84,10 +94,23 @@ def process_vlm_inputs(model_inputs: dict, processor, backbone_name, max_length=
                 image_grid_thw = [torch.from_numpy(v) if v is not None else image_grid_thw_for_padding for v in image_grid_thw]
                 image_grid_thw = torch.cat(image_grid_thw, dim=0)
                 inputs['image_grid_thw'] = image_grid_thw
+        if backbone_name == QWEN3_VL:
+            # keep pixel_values/image_grid_thw as one-slot-per-row (stacked, with
+            # None preserved per row) rather than QWEN2_VL's cat-into-one-tensor
+            # above -- the qwen3_vl model wrapper (src/vlm_backbone/qwen3_vl)
+            # needs per-row None markers to correctly split real-image rows from
+            # dummy/text-only ones, including in genuinely mixed batches.
+            pixel_value_shape_for_padding = list(v.shape for v in pixel_values if v is not None)[0]
+            pixel_values = [torch.from_numpy(v) if v is not None else torch.zeros(pixel_value_shape_for_padding) for v in pixel_values]
+            pixel_values = torch.stack(pixel_values, dim=0)
+            image_grid_thw = [torch.from_numpy(v) if v is not None else None for v in image_grid_thw]
+            inputs['image_grid_thw'] = image_grid_thw
         # add them to inputs
         inputs['pixel_values'] = pixel_values
         inputs['image_sizes'] = image_sizes
     else:
+        if backbone_name == QWEN3_VL:
+            inputs['image_grid_thw'] = [None] * input_ids.shape[0]
         inputs['pixel_values'] = torch.zeros(input_ids.shape[0], 1)
         inputs['image_sizes'] = torch.ones(input_ids.shape[0], 1)
 

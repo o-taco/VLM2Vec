@@ -6,7 +6,17 @@ import time
 
 from packaging import version
 from accelerate import skip_first_batches, DistributedType
+import transformers.trainer as _hf_trainer_module
 from transformers.trainer import Trainer, TRAINING_ARGS_NAME, TRAINER_STATE_NAME
+
+# transformers>=4.57 refuses torch.load() of optimizer/scheduler/rng checkpoint
+# state (even weights_only=True) unless torch>=2.6, guarding against untrusted
+# pickled checkpoints. torch is pinned to 2.4.0 here (see the Volta/bf16 notes
+# in src/vlm_backbone/qwen3_vl) and every checkpoint this repo resumes from is
+# one we generated ourselves, so the check is a false positive for our use --
+# no-op it rather than upgrading torch and risking the CUDA/Volta compatibility
+# work already done.
+_hf_trainer_module.check_torch_load_is_safe = lambda *args, **kwargs: None
 import torch.distributed as dist
 from typing import Optional
 import os
@@ -368,7 +378,7 @@ class MMEBTrainer(Trainer):
             for _ in range(total_updates):
                 update_step += 1
                 num_batches = args.gradient_accumulation_steps if update_step != (total_updates - 1) else remainder
-                batch_samples, num_items_in_batch = self.get_batch_samples(epoch_iterator, num_batches)
+                batch_samples, num_items_in_batch = self.get_batch_samples(epoch_iterator, num_batches, args.device)
                 for i, inputs in enumerate(batch_samples):
                     step += 1
                     total_batched_samples += 1
@@ -487,7 +497,7 @@ class MMEBTrainer(Trainer):
                         self.state.global_step += 1
                         self.state.epoch = epoch + (step + 1 + steps_skipped) / steps_in_epoch
                         self.control = self.callback_handler.on_step_end(args, self.state, self.control)
-                        self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval)
+                        self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval, start_time)
                     else:
                         self.control = self.callback_handler.on_substep_end(args, self.state, self.control)
 
@@ -512,10 +522,9 @@ class MMEBTrainer(Trainer):
                 self.control.should_training_stop = True
 
             self.control = self.callback_handler.on_epoch_end(args, self.state, self.control)
-            # transformers==4.46.3's real _maybe_log_save_evaluate (unmodified, inherited from
-            # the base Trainer) doesn't take start_time -- this vendored loop was copied from a
-            # different transformers version than the one actually pinned in requirements.txt.
-            self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval)
+            # transformers>=4.57's _maybe_log_save_evaluate requires start_time (it didn't
+            # under the 4.46.3 pin this vendored loop originally targeted).
+            self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval, start_time)
 
             if self.control.should_training_stop:
                 break

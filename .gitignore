@@ -117,3 +117,5 @@ archive/
 # Downloaded datasets and training run outputs/checkpoints (not source, lives on HF Hub instead)
 /data/
 /output/
+/data_eval/
+/checkpoints/

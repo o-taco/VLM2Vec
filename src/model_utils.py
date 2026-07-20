@@ -7,6 +7,7 @@ from src.vlm_backbone.llava_next import LlavaNextForConditionalGeneration
 from src.vlm_backbone.phi3_v.modeling_phi3_v import Phi3VForCausalLM
 from src.vlm_backbone.qwen2_5_vl import Qwen2_5_VLForConditionalGeneration
 from src.vlm_backbone.qwen2_vl import Qwen2VLForConditionalGeneration
+from src.vlm_backbone.qwen3_vl import Qwen3VLForConditionalGeneration
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +19,13 @@ PHI3V = 'phi3_v'
 LLAVA_NEXT = 'llava_next'
 QWEN2_VL = 'qwen2_vl'
 QWEN2_5_VL = 'qwen2_5_vl'
+QWEN3_VL = 'qwen3_vl'
 MODEL2BACKBONE = {  # keys are from hf_config.model_type
     'phi3_v': PHI3V,
     'llava_next': LLAVA_NEXT,
     'qwen2_vl': QWEN2_VL,
     'qwen2_5_vl': QWEN2_5_VL,
+    'qwen3_vl': QWEN3_VL,
 }
 SUPPORTED_MODELS = set(MODEL2BACKBONE.keys())
 
@@ -31,6 +34,7 @@ vlm_image_tokens = {
     LLAVA_NEXT: "<image>",
     QWEN2_VL: "<|image_pad|>",
     QWEN2_5_VL: "<|image_pad|>",
+    QWEN3_VL: "<|image_pad|>",
 }
 
 backbone2model = {
@@ -38,6 +42,7 @@ backbone2model = {
     LLAVA_NEXT: LlavaNextForConditionalGeneration,
     QWEN2_VL: Qwen2VLForConditionalGeneration,
     QWEN2_5_VL: Qwen2_5_VLForConditionalGeneration,
+    QWEN3_VL: Qwen3VLForConditionalGeneration,
 }
 
 def load_processor(model_args):
@@ -78,6 +83,17 @@ def load_processor(model_args):
         image_processor = Qwen2_5_VLImageProcessor.from_pretrained(model_name)
         tokenizer = Qwen2TokenizerFast.from_pretrained(model_name)
         processor = Qwen2_5_VLProcessor.from_pretrained(model_name, image_processor=image_processor, tokenizer=tokenizer)
+    elif model_args.model_backbone == QWEN3_VL:
+        # Qwen3-VL ships natively in transformers (no vendored processor needed,
+        # unlike qwen2_vl/qwen2_5_vl which predate this repo's transformers pin).
+        from transformers import Qwen3VLProcessor, AutoImageProcessor, Qwen2TokenizerFast
+        image_processor = AutoImageProcessor.from_pretrained(model_name)
+        tokenizer = Qwen2TokenizerFast.from_pretrained(model_name)
+        processor = Qwen3VLProcessor.from_pretrained(
+            model_name,
+            image_processor=image_processor, tokenizer=tokenizer,
+            min_pixels=256 * 28 * 28, max_pixels=1280 * 28 * 28
+        )
     else:
         from transformers import AutoProcessor
         processor = AutoProcessor.from_pretrained(
@@ -97,9 +113,13 @@ def Llava_NEXT_process_fn(model_inputs: dict, processor, max_length=None):
     texts, images = model_inputs['text'], model_inputs['image']
     image_exists = False
     # 1. iterate each pair and process (since processors do not support batch processing)
+    # truncation=False: with max_len=512 and ~576 image tokens from a 336x336 crop,
+    # truncating would cut off image tokens -- silently under the old transformers pin,
+    # but transformers>=4.57's LlavaNextProcessor validates and raises instead (see
+    # collator.py's process_vlm_inputs, which already carried this same fix).
     for text, image in zip(texts, images):
         if image is None:
-            inputs = processor(images=None, text=text, return_tensors="np", max_length=max_length, truncation=True)
+            inputs = processor(images=None, text=text, return_tensors="np", max_length=max_length, truncation=False)
             input_id = inputs["input_ids"].squeeze().tolist()
             if isinstance(input_id, int):
                 # in case of empty string, only BOS is included
@@ -110,7 +130,7 @@ def Llava_NEXT_process_fn(model_inputs: dict, processor, max_length=None):
             image_grid_thw.append(None)
         else:
             image_exists = True
-            inputs = processor(images=image, text=text, return_tensors="np", max_length=max_length, truncation=True)
+            inputs = processor(images=image, text=text, return_tensors="np", max_length=max_length, truncation=False)
             input_ids.append(inputs["input_ids"].squeeze().tolist())
             pixel_values.append(inputs['pixel_values'])
             if 'image_sizes' in inputs:
@@ -250,9 +270,54 @@ def Qwen2_VL_process_fn(model_inputs: dict, processor, max_length=None):
     return inputs
 
 
+def Qwen3_VL_process_fn(model_inputs: dict, processor, max_length=None):
+    # Same as Qwen2_VL_process_fn, but the native transformers image processor
+    # for qwen3_vl is a "fast" (torch-only) processor that no longer accepts
+    # return_tensors="np" -- request "pt" and convert immediately instead.
+    input_ids, pixel_values, image_grid_thw = [], [], []
+    texts, images = model_inputs['text'], model_inputs['image']
+    image_exists = False
+    for text, image in zip(texts, images):
+        if image is None:
+            inputs = processor(text=[text], images=None, return_tensors="pt", max_length=max_length, truncation=True)
+            input_id = inputs["input_ids"].squeeze().tolist()
+            if isinstance(input_id, int):
+                input_id = [input_id]
+            input_ids.append(input_id)
+            pixel_values.append(None)
+            image_grid_thw.append(None)
+        else:
+            image_exists = True
+            inputs = processor(images=[image], text=[text], return_tensors="pt", max_length=max_length, truncation=True)
+            input_ids.append(inputs["input_ids"].squeeze().tolist())
+            pixel_values.append(inputs['pixel_values'].numpy())
+            image_grid_thw.append(inputs['image_grid_thw'].numpy())
+
+    batch_encoding = processor.tokenizer.pad({'input_ids': input_ids}, return_tensors="pt")
+    input_ids, attention_mask = batch_encoding['input_ids'], batch_encoding['attention_mask']
+    inputs = {
+        'input_ids': input_ids.long(),
+        'attention_mask': attention_mask.long(),
+        'texts': texts,
+        'images': images,
+    }
+    if image_exists:
+        pixel_value_shape_for_padding = list(v.shape for v in pixel_values if v is not None)[0]
+        pixel_values = [torch.from_numpy(v) if v is not None else torch.zeros(pixel_value_shape_for_padding) for v in pixel_values]
+        pixel_values = torch.stack(pixel_values, dim=0)
+        inputs['pixel_values'] = pixel_values
+        inputs['image_grid_thw'] = image_grid_thw
+    else:
+        inputs['pixel_values'] = torch.zeros(input_ids.shape[0], 1)
+        inputs['image_grid_thw'] = [None] * input_ids.shape[0]
+
+    return inputs
+
+
 process_vlm_inputs_fns = {
     PHI3V: Phi3V_process_fn,
     LLAVA_NEXT: Llava_NEXT_process_fn,
     QWEN2_VL: Qwen2_VL_process_fn,
     QWEN2_5_VL: Qwen2_VL_process_fn,
+    QWEN3_VL: Qwen3_VL_process_fn,
 }
