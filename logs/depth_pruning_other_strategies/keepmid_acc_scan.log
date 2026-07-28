@@ -1,0 +1,41 @@
+=== checkpoint-320 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3468
+Final train top-1 accuracy (in-batch, 200 examples): 0.3600
+=== checkpoint-340 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3452
+Final train top-1 accuracy (in-batch, 200 examples): 0.3250
+=== checkpoint-360 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3417
+Final train top-1 accuracy (in-batch, 200 examples): 0.3450
+=== checkpoint-380 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3441
+Final train top-1 accuracy (in-batch, 200 examples): 0.3500
+=== checkpoint-400 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3493
+Final train top-1 accuracy (in-batch, 200 examples): 0.3150
+=== checkpoint-420 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3468
+Final train top-1 accuracy (in-batch, 200 examples): 0.3250
+=== checkpoint-440 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3540
+Final train top-1 accuracy (in-batch, 200 examples): 0.3150
+=== checkpoint-460 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3504
+Final train top-1 accuracy (in-batch, 200 examples): 0.3300
+=== checkpoint-480 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3525
+Final train top-1 accuracy (in-batch, 200 examples): 0.3100
+=== checkpoint-500 ===
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 1.3454
+Final train top-1 accuracy (in-batch, 200 examples): 0.3200
+DONE
