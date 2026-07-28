@@ -1,0 +1,2 @@
+3 sizematch2B best_step=420 best_acc=0.2950 latest_acc=0.2900
+9 75pctratio best_step=460 best_acc=0.7050 latest_acc=0.7050

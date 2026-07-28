@@ -1,0 +1,13 @@
+07/25/2026 04:50:46 - INFO - datasets -   PyTorch version 2.4.0 available.
+07/25/2026 04:50:47 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+07/25/2026 04:50:51 - INFO - src.utils -   Loading processor
+The tokenizer you are loading from 'pruned_models/qwen3vl-2b-20layer-keepfirst' with an incorrect regex pattern: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to fix this issue.
+The tokenizer you are loading from 'pruned_models/qwen3vl-2b-20layer-keepfirst' with an incorrect regex pattern: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to fix this issue.
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+=== 28.6pct_keepfirst ===
+diag (true pos pairs):     mean=0.1790 std=0.0735
+offdiag (in-batch negs):   mean=0.1014 std=0.0576
+gap (diag - offdiag mean): 0.0776
+qry-vs-qry offdiag sim:    mean=0.5437 std=0.0758  (embedding-space collapse check)
+argmax-correct in this batch: 18/32

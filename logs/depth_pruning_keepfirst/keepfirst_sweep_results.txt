@@ -1,0 +1,5 @@
+21 25pct best_step=380 best_acc=0.8000 latest_acc=0.7750
+20 28.6pct best_step=400 best_acc=0.7750 latest_acc=0.7550
+18 35.7pct best_step=340 best_acc=0.7500 latest_acc=0.7500
+14 50pct best_step=340 best_acc=0.7750 latest_acc=0.7600
+7 75pct best_step=480 best_acc=0.6900 latest_acc=0.6850
