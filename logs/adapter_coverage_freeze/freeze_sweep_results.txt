@@ -1,0 +1,4 @@
+0 0pct_frozen_all_adapted num_adapted=28 best_step=480 best_acc=0.8600 latest_acc=0.8600
+25 25pct_frozen_last75pct num_adapted=21 best_step=420 best_acc=0.8200 latest_acc=0.8150
+50 50pct_frozen_last50pct num_adapted=14 best_step=360 best_acc=0.7700 latest_acc=0.7600
+75 75pct_frozen_last25pct num_adapted=7 best_step=360 best_acc=0.6500 latest_acc=0.6400

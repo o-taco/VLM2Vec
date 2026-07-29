@@ -52,6 +52,12 @@ class ModelArguments:
         default="qkv_proj,o_proj,gate_up_proj,down_proj,k_proj,q_proj,out_proj,v_proj",
         metadata={"help": "lora target modules"}
     )
+    lora_layers_to_transform: str = field(
+        default=None,
+        metadata={"help": "comma-separated decoder layer indices to attach LoRA adapters to (e.g. '21,22,23,24,25,26,27'). "
+                           "Layers not listed keep their pretrained weights frozen but still run forward (unlike depth "
+                           "pruning, which removes them). Default (unset) attaches LoRA to every layer, the prior behavior."}
+    )
     num_crops: int = field(
         default=16,
         metadata={"help": "number of crops used in image encoder"}

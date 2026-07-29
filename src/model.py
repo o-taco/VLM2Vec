@@ -123,10 +123,14 @@ class MMEBModel(nn.Module):
 
         if model_args.lora:
             print_master(f'Loading lora adapter from {base_model}')
+            layers_to_transform = None
+            if model_args.lora_layers_to_transform:
+                layers_to_transform = [int(i) for i in model_args.lora_layers_to_transform.split(',')]
             lora_config = LoraConfig(
                 r=model_args.lora_r,
                 lora_alpha=model_args.lora_alpha,
                 target_modules=model_args.lora_target_modules.split(','),
+                layers_to_transform=layers_to_transform,
                 lora_dropout=model_args.lora_dropout,
                 init_lora_weights="gaussian",
                 # DoRA causes a no-grad/dead-gradient bug on this training path (found empirically
