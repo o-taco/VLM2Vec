@@ -32,9 +32,12 @@ _probe_depths = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
 _probe_accs = [0.32666666666666666, 0.32, 0.44, 0.4666666666666667, 0.6333333333333333,
                0.6666666666666666, 0.7933333333333333, 0.8333333333333334, 0.8333333333333334,
                0.82, 0.8, 0.8133333333333334, 0.8, 0.8133333333333334, 0.7933333333333333]
+# chart is chopped at 75% pruned to match the other curves' range; this drops
+# depths 0/2/4 (85.7-100% pruned), where the real data actually keeps declining
+# further (down to ~32-45%) -- see git history for the uncropped version.
 prune_keepfirst_probe = {
-    "x": [(28 - d) / 28 * 100 for d in _probe_depths],
-    "y": [a * 100 for a in _probe_accs],
+    "x": [(28 - d) / 28 * 100 for d in _probe_depths if (28 - d) / 28 * 100 <= 75],
+    "y": [a * 100 for d, a in zip(_probe_depths, _probe_accs) if (28 - d) / 28 * 100 <= 75],
 }
 
 fig, ax = plt.subplots(figsize=(9.5, 6))
@@ -62,15 +65,15 @@ for x, y in zip(prune_keepfirst_lora["x"], prune_keepfirst_lora["y"]):
 for x, y in zip(prune_evenly_spaced_lora["x"], prune_evenly_spaced_lora["y"]):
     ax.annotate(f"{y:.0f}%", (x, y), textcoords="offset points", xytext=(0, -14),
                 ha="center", fontsize=9, color="#1baf7a", fontweight="bold")
-# label only the endpoints + peak of the dense 15-point probe curve, to avoid clutter
-_probe_label_idxs = [0, _probe_accs.index(max(_probe_accs)), len(_probe_accs) - 1]
+# label only the endpoints + peak of the (cropped) probe curve, to avoid clutter
+_probe_y = prune_keepfirst_probe["y"]
+_probe_label_idxs = [0, _probe_y.index(max(_probe_y)), len(_probe_y) - 1]
 for i in _probe_label_idxs:
     x, y = prune_keepfirst_probe["x"][i], prune_keepfirst_probe["y"][i]
     ax.annotate(f"{y:.0f}%", (x, y), textcoords="offset points", xytext=(0, 10),
                 ha="center", fontsize=8, color="#e34948", fontweight="bold")
 
-ax.set_xlim(-3, 105)
-ax.set_xticks(range(0, 101, 10))
+ax.set_xlim(-3, 83)
 ax.set_ylim(0, 100)
 ax.set_xlabel("% of decoder layers pruned (existing curves) / frozen (new curve)")
 ax.set_ylabel("In-batch accuracy (4-way, chance = 25%)")
