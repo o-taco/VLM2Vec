@@ -112,9 +112,15 @@ class MMEBTrainer(Trainer):
         prefix = 'encoder.'
         assert all(k.startswith(prefix) for k in state_dict.keys()), list(state_dict.keys())
         state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
-        self.model.encoder.save_pretrained(
-            output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
-        )
+        # A fully frozen backbone (head-only ablation, no LoRA) never changes, so
+        # re-dumping the full base model at every checkpoint is pure waste -- with
+        # save_total_limit rotating several checkpoints concurrently this can fill
+        # the disk (hit in practice: 2B N=4/N=5 both died on "No space left on
+        # device" mid-sweep). Only the (tiny) FFN head actually needs saving here.
+        if any(p.requires_grad for p in self.model.encoder.parameters()):
+            self.model.encoder.save_pretrained(
+                output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+            )
         _save_ffn_head_if_present(self.model, output_dir, ffn_head_state)
 
         if self.tokenizer is not None:
@@ -656,9 +662,15 @@ class GradCacheTrainer(MMEBTrainer):
         prefix = 'encoder.'
         assert all(k.startswith(prefix) for k in state_dict.keys()), list(state_dict.keys())
         state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
-        self.model.encoder.save_pretrained(
-            output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
-        )
+        # A fully frozen backbone (head-only ablation, no LoRA) never changes, so
+        # re-dumping the full base model at every checkpoint is pure waste -- with
+        # save_total_limit rotating several checkpoints concurrently this can fill
+        # the disk (hit in practice: 2B N=4/N=5 both died on "No space left on
+        # device" mid-sweep). Only the (tiny) FFN head actually needs saving here.
+        if any(p.requires_grad for p in self.model.encoder.parameters()):
+            self.model.encoder.save_pretrained(
+                output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+            )
         _save_ffn_head_if_present(self.model, output_dir, ffn_head_state)
 
         if self.tokenizer is not None:
@@ -720,9 +732,15 @@ class GradCacheLateProcessTrainer(MMEBTrainer):
         prefix = 'encoder.'
         assert all(k.startswith(prefix) for k in state_dict.keys()), list(state_dict.keys())
         state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
-        self.model.encoder.save_pretrained(
-            output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
-        )
+        # A fully frozen backbone (head-only ablation, no LoRA) never changes, so
+        # re-dumping the full base model at every checkpoint is pure waste -- with
+        # save_total_limit rotating several checkpoints concurrently this can fill
+        # the disk (hit in practice: 2B N=4/N=5 both died on "No space left on
+        # device" mid-sweep). Only the (tiny) FFN head actually needs saving here.
+        if any(p.requires_grad for p in self.model.encoder.parameters()):
+            self.model.encoder.save_pretrained(
+                output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+            )
         _save_ffn_head_if_present(self.model, output_dir, ffn_head_state)
 
         if self.tokenizer is not None:
