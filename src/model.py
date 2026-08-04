@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Dict, Optional
 import torch
 import torch.distributed as dist
@@ -9,6 +11,40 @@ from src.model_utils import LLAVA_NEXT, QWEN2_VL, PHI3V, get_backbone_name, prin
 from src.vlm_backbone.phi3_v.modeling_phi3_v import Phi3VForCausalLM
 from src.vlm_backbone.llava_next import LlavaNextForConditionalGeneration
 from src.vlm_backbone.qwen3_vl import patch_vision_patch_embed_for_volta
+
+FFN_HEAD_WEIGHTS_NAME = 'ffn_head.pt'
+FFN_HEAD_CONFIG_NAME = 'ffn_head_config.json'
+
+
+def _get_hidden_size(config) -> int:
+    return getattr(config, 'hidden_size', None) or config.text_config.hidden_size
+
+
+class FFNHead(nn.Module):
+    """Small readout head applied to the pooled embedding, after pooling and
+    before normalization. In residual mode the last linear layer is
+    zero-initialized so the head starts as an exact identity function --
+    training begins at the frozen zero-shot embedding and the head learns an
+    additive correction, isolating "adapting the embedding space" from
+    "adapting internal representations" (LoRA)."""
+
+    def __init__(self, dim: int, hidden_dim: int, residual: bool = True):
+        super().__init__()
+        self.dim = dim
+        self.hidden_dim = hidden_dim
+        self.residual = residual
+        self.net = nn.Sequential(
+            nn.Linear(dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, dim),
+        )
+        if residual:
+            nn.init.zeros_(self.net[-1].weight)
+            nn.init.zeros_(self.net[-1].bias)
+
+    def forward(self, x: Tensor) -> Tensor:
+        out = self.net(x)
+        return x + out if self.residual else out
 
 
 class MMEBModel(nn.Module):
@@ -26,7 +62,14 @@ class MMEBModel(nn.Module):
         self.pooling = pooling
         self.normalize = normalize
         self.temperature = temperature
+        self.ffn_head = None
         self.cross_entropy = nn.CrossEntropyLoss(reduction='mean')
+
+    def add_ffn_head(self, hidden_dim: int = None, residual: bool = True) -> FFNHead:
+        dim = _get_hidden_size(self.config)
+        param = next(self.encoder.parameters())
+        self.ffn_head = FFNHead(dim, hidden_dim or dim, residual=residual).to(device=param.device, dtype=param.dtype)
+        return self.ffn_head
 
     def gradient_checkpointing_enable(self, **kwargs):
         self.encoder.gradient_checkpointing_enable(**kwargs)
@@ -42,10 +85,14 @@ class MMEBModel(nn.Module):
         input = {k: (v.to(device) if torch.is_tensor(v) else v) for k, v in input.items()}
         hidden_states = self.encoder(**input, return_dict=True, output_hidden_states=True)
         hidden_states = hidden_states.hidden_states[-1]
-        pooled_output = self._pooling(hidden_states, input['attention_mask'])
-        return pooled_output
+        reps = self._pool(hidden_states, input['attention_mask'])
+        if self.ffn_head is not None:
+            reps = self.ffn_head(reps)
+        if self.normalize:
+            reps = torch.nn.functional.normalize(reps, p=2, dim=-1)
+        return reps
 
-    def _pooling(self, last_hidden_state, attention_mask):
+    def _pool(self, last_hidden_state, attention_mask):
         if self.pooling == 'last' or self.pooling == 'eos':
             left_padding = (attention_mask[:, -1].sum() == attention_mask.shape[0])
             batch_size = last_hidden_state.shape[0]
@@ -60,8 +107,6 @@ class MMEBModel(nn.Module):
                     torch.arange(batch_size, device=last_hidden_state.device), eos_indices]
         else:
             raise NotImplementedError
-        if self.normalize:
-            reps = torch.nn.functional.normalize(reps, p=2, dim=-1)
         return reps
 
     @classmethod
@@ -146,12 +191,18 @@ class MMEBModel(nn.Module):
                 temperature=model_args.temperature
             )
         else:
+            if model_args.freeze_backbone:
+                for p in base_model.parameters():
+                    p.requires_grad_(False)
             model = cls(
                 encoder=base_model,
                 pooling=model_args.pooling,
                 normalize=model_args.normalize,
                 temperature=model_args.temperature
             )
+
+        if model_args.add_ffn_head:
+            model.add_ffn_head(hidden_dim=model_args.ffn_hidden_dim, residual=model_args.ffn_residual)
 
         return model
 
@@ -210,13 +261,28 @@ class MMEBModel(nn.Module):
             model = cls(
                 encoder=base_model,
                 pooling=model_args.pooling,
-                normalize=model_args.normalize
+                normalize=model_args.normalize,
+                temperature=model_args.temperature
             )
+
+        ffn_head_config_path = os.path.join(checkpoint_path, FFN_HEAD_CONFIG_NAME)
+        if os.path.exists(ffn_head_config_path):
+            with open(ffn_head_config_path) as f:
+                head_cfg = json.load(f)
+            model.add_ffn_head(hidden_dim=head_cfg['hidden_dim'], residual=head_cfg['residual'])
+            state_dict = torch.load(os.path.join(checkpoint_path, FFN_HEAD_WEIGHTS_NAME), map_location='cpu', weights_only=True)
+            model.ffn_head.load_state_dict(state_dict)
+            if not is_trainable:
+                model.ffn_head.eval()
 
         return model
 
     def save(self, output_dir: str):
         self.encoder.save_pretrained(output_dir)
+        if self.ffn_head is not None:
+            torch.save(self.ffn_head.state_dict(), os.path.join(output_dir, FFN_HEAD_WEIGHTS_NAME))
+            with open(os.path.join(output_dir, FFN_HEAD_CONFIG_NAME), 'w') as f:
+                json.dump({'hidden_dim': self.ffn_head.hidden_dim, 'residual': self.ffn_head.residual}, f)
 
     def forward(self, qry: Dict[str, Tensor] = None, tgt: Dict[str, Tensor] = None, *args, **kwargs):
         qry_reps = self.encode_input(qry) if qry else None  # (bsz_per_device, dim)

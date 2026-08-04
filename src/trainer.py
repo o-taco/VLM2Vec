@@ -19,15 +19,35 @@ from transformers.trainer import Trainer, TRAINING_ARGS_NAME, TRAINER_STATE_NAME
 _hf_trainer_module.check_torch_load_is_safe = lambda *args, **kwargs: None
 import torch.distributed as dist
 from typing import Optional
+import json
 import os
 import torch
 import math
 
 from src.collator import split_vlm_inputs, get_dense_rep, split_and_process_vlm_inputs
-from src.model import MMEBModel
+from src.model import MMEBModel, FFN_HEAD_CONFIG_NAME, FFN_HEAD_WEIGHTS_NAME
 from src.model_utils import process_vlm_inputs_fns
 from src.loss import SimpleContrastiveLoss, DistributedContrastiveLoss
 from itertools import repeat
+
+
+def _split_off_ffn_head_state(state_dict):
+    """Pulls 'ffn_head.*' keys out of a full MMEBModel state_dict so the
+    remaining keys are all 'encoder.*', matching the assert every _save()
+    below relies on. Returns (encoder_state_dict, ffn_head_state_dict)."""
+    ffn_head_state = {k[len('ffn_head.'):]: v for k, v in state_dict.items() if k.startswith('ffn_head.')}
+    encoder_state = {k: v for k, v in state_dict.items() if not k.startswith('ffn_head.')}
+    return encoder_state, ffn_head_state
+
+
+def _save_ffn_head_if_present(model, output_dir, ffn_head_state):
+    ffn_head = getattr(model, 'ffn_head', None)
+    if ffn_head is None:
+        return
+    state = ffn_head_state if ffn_head_state else ffn_head.state_dict()
+    torch.save(state, os.path.join(output_dir, FFN_HEAD_WEIGHTS_NAME))
+    with open(os.path.join(output_dir, FFN_HEAD_CONFIG_NAME), 'w') as f:
+        json.dump({'hidden_dim': ffn_head.hidden_dim, 'residual': ffn_head.residual}, f)
 from grad_cache.grad_cache import GradCache
 
 from transformers.training_args import OptimizerNames, ParallelMode, TrainingArguments
@@ -88,12 +108,14 @@ class MMEBTrainer(Trainer):
 
         if state_dict is None:
             state_dict = self.model.state_dict()
+        state_dict, ffn_head_state = _split_off_ffn_head_state(state_dict)
         prefix = 'encoder.'
         assert all(k.startswith(prefix) for k in state_dict.keys()), list(state_dict.keys())
         state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
         self.model.encoder.save_pretrained(
             output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
         )
+        _save_ffn_head_if_present(self.model, output_dir, ffn_head_state)
 
         if self.tokenizer is not None:
             self.tokenizer.save_pretrained(output_dir)
@@ -630,12 +652,14 @@ class GradCacheTrainer(MMEBTrainer):
 
         if state_dict is None:
             state_dict = self.model.state_dict()
+        state_dict, ffn_head_state = _split_off_ffn_head_state(state_dict)
         prefix = 'encoder.'
         assert all(k.startswith(prefix) for k in state_dict.keys()), list(state_dict.keys())
         state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
         self.model.encoder.save_pretrained(
             output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
         )
+        _save_ffn_head_if_present(self.model, output_dir, ffn_head_state)
 
         if self.tokenizer is not None:
             self.tokenizer.save_pretrained(output_dir)
@@ -692,12 +716,14 @@ class GradCacheLateProcessTrainer(MMEBTrainer):
 
         if state_dict is None:
             state_dict = self.model.state_dict()
+        state_dict, ffn_head_state = _split_off_ffn_head_state(state_dict)
         prefix = 'encoder.'
         assert all(k.startswith(prefix) for k in state_dict.keys()), list(state_dict.keys())
         state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
         self.model.encoder.save_pretrained(
             output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
         )
+        _save_ffn_head_if_present(self.model, output_dir, ffn_head_state)
 
         if self.tokenizer is not None:
             self.tokenizer.save_pretrained(output_dir)

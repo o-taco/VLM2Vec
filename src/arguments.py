@@ -58,6 +58,27 @@ class ModelArguments:
                            "Layers not listed keep their pretrained weights frozen but still run forward (unlike depth "
                            "pruning, which removes them). Default (unset) attaches LoRA to every layer, the prior behavior."}
     )
+    add_ffn_head: bool = field(
+        default=False,
+        metadata={"help": "attach a small residual 2-layer FFN (Linear-GELU-Linear) after pooling, before "
+                           "normalization, trained jointly with the contrastive loss. Combined with "
+                           "--freeze_backbone and --lora False, isolates how much of the training gain comes from "
+                           "reshaping the readout embedding space rather than adapting internal representations."}
+    )
+    ffn_hidden_dim: int = field(
+        default=None,
+        metadata={"help": "hidden width of the FFN head's middle layer; defaults to the backbone hidden size"}
+    )
+    ffn_residual: bool = field(
+        default=True,
+        metadata={"help": "if True, the head output is added to the pooled reps (zero-initialized, so training "
+                           "starts at the frozen zero-shot embedding); if False, the head output replaces them"}
+    )
+    freeze_backbone: bool = field(
+        default=False,
+        metadata={"help": "freeze all encoder weights (must be used with --lora False); pairs with --add_ffn_head "
+                           "to train only the readout head on top of a fully frozen backbone"}
+    )
     num_crops: int = field(
         default=16,
         metadata={"help": "number of crops used in image encoder"}
