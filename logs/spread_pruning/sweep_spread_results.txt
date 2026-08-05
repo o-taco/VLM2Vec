@@ -1,0 +1,2 @@
+8b spread6_keepfirst keep=0,1,2,12,23,35 N=6 best_step=460 best_acc=0.3500 latest_acc=0.3050
+2b spread6_keepfirst keep=0,1,2,9,18,27 N=6 best_step=360 best_acc=0.2800 latest_acc=0.2700
