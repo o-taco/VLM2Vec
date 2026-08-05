@@ -1,11 +1,22 @@
 #!/bin/bash
 # Controls for the FFN head's parameter count when comparing head-only vs LoRA
 # across model sizes. The head's params scale with hidden_size^2, so 8B's
-# default head (hidden_dim=4096) has ~4x the params of 2B's (hidden_dim=2048)
-# -- confounding "8B needs less internal adaptation" with "8B's head just had
-# more capacity to work with". This reruns 8B N=3 and N=9 (the ends of the
-# tested range) with --ffn_hidden_dim 2048, capping the head at 2B's size, to
-# see whether head-only still matches/beats LoRA once that's controlled for.
+# default head (hidden_dim=4096, 33.5M params) has ~4x the params of 2B's
+# (hidden_dim=2048, 8.39M params) -- confounding "8B needs less internal
+# adaptation" with "8B's head just had more capacity to work with".
+#
+# The head's outer dim is pinned to the backbone's hidden_size (4096 for 8B,
+# can't change), so --ffn_hidden_dim only controls the bottleneck width, not
+# the total param count directly. To match 2B's exact head param count
+# (2*dim*h + h + dim = 8,392,704) on 8B (dim=4096), solve for h: 8193h =
+# 8,388,608 -> h=1024 gives 8,393,728 params, within 0.01% of 2B's head.
+# (hidden_dim=2048 -- the naive "same width as 2B's own hidden_size" choice --
+# actually gives 16,783,360 params, 2x too many; caught and fixed before
+# burning the ~4h run on the wrong control.)
+#
+# Reruns 8B N=3 and N=9 (the ends of the tested range) with
+# --ffn_hidden_dim 1024 to see whether head-only still matches/beats LoRA once
+# head capacity is actually controlled for.
 set -uo pipefail
 cd /workspace/VLM2Vec
 source /venv/main/bin/activate
@@ -34,8 +45,8 @@ run_config() {
   if [ $? -ne 0 ]; then echo "PRUNE FAILED for N=${N}"; return 1; fi
   check_disk
 
-  echo "--- training (frozen backbone + FFN head, hidden_dim=2048) ---"
-  N=$N BACKBONE_SIZE=8b bash examples/qwen3_vl/run_train_aokvqa_ffnhead_only.sh --ffn_hidden_dim 2048
+  echo "--- training (frozen backbone + FFN head, hidden_dim=1024, matches 2B's ~8.39M head params) ---"
+  N=$N BACKBONE_SIZE=8b bash examples/qwen3_vl/run_train_aokvqa_ffnhead_only.sh --ffn_hidden_dim 1024
   if [ $? -ne 0 ]; then echo "TRAIN FAILED for N=${N}"; rm -rf "$MODEL_DIR" "$OUT_DIR"; return 1; fi
 
   echo "--- scanning checkpoints ---"
