@@ -31,7 +31,7 @@ check_disk() { df -h /workspace | tail -1; }
 run_config() {
   local N=$1
   echo "=================================================="
-  echo "=== FFN-head (capacity-matched, hidden_dim=2048): 8b N=${N} $(date) ==="
+  echo "=== FFN-head (capacity-matched, hidden_dim=1024): 8b N=${N} $(date) ==="
   echo "=================================================="
 
   local KEEP_IDX MODEL_DIR OUT_DIR
