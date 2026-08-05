@@ -112,7 +112,10 @@ run_config() {
   check_disk
 }
 
-run_config 3
-run_config 9
+# N=3 and N=9 already completed (results in /tmp/sweep_ffnhead_capacity_control_results.txt);
+# their checkpoint-scan step originally hit a since-fixed OUT_DIR bug and got manually
+# recovered via recover_ffnhead_capacity_control.sh. Filling in the middle of the curve now.
+run_config 6
+run_config 7
 
 echo "ALL PHASES DONE $(date)"
