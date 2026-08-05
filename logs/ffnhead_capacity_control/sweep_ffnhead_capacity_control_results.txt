@@ -1,2 +1,4 @@
 8b 3 best_step=360 best_acc=0.3600 latest_acc=0.2850
 8b 9 best_step=440 best_acc=0.6200 latest_acc=0.6150
+8b 6 best_step=440 best_acc=0.3300 latest_acc=0.3250
+8b 7 best_step=420 best_acc=0.5550 latest_acc=0.5400
