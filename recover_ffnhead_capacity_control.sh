@@ -1,22 +1,11 @@
 #!/bin/bash
-# Controls for the FFN head's parameter count when comparing head-only vs LoRA
-# across model sizes. The head's params scale with hidden_size^2, so 8B's
-# default head (hidden_dim=4096, 33.5M params) has ~4x the params of 2B's
-# (hidden_dim=2048, 8.39M params) -- confounding "8B needs less internal
-# adaptation" with "8B's head just had more capacity to work with".
-#
-# The head's outer dim is pinned to the backbone's hidden_size (4096 for 8B,
-# can't change), so --ffn_hidden_dim only controls the bottleneck width, not
-# the total param count directly. To match 2B's exact head param count
-# (2*dim*h + h + dim = 8,392,704) on 8B (dim=4096), solve for h: 8193h =
-# 8,388,608 -> h=1024 gives 8,393,728 params, within 0.01% of 2B's head.
-# (hidden_dim=2048 -- the naive "same width as 2B's own hidden_size" choice --
-# actually gives 16,783,360 params, 2x too many; caught and fixed before
-# burning the ~4h run on the wrong control.)
-#
-# Reruns 8B N=3 and N=9 (the ends of the tested range) with
-# --ffn_hidden_dim 1024 to see whether head-only still matches/beats LoRA once
-# head capacity is actually controlled for.
+# Recovers eval results for capacity-control checkpoints that already trained
+# successfully but whose scan/rename/diagnostics step failed because the
+# orchestrator's OUT_DIR variable didn't match the training script's actual
+# (hardcoded) output path. Checkpoints in output/aokvqa_qwen3vl8b_${N}layer_
+# ffnhead_only survived; only the pruned base model was deleted (needed to
+# reconstruct the architecture for eval). Re-prunes just that base, then runs
+# the normal scan -> rename -> diagnostics -> results -> cleanup tail.
 set -uo pipefail
 cd /workspace/VLM2Vec
 source /venv/main/bin/activate
@@ -28,33 +17,27 @@ HF_HUB_DIR="${HF_HOME:-/workspace/.hf_home}/hub"
 free_cache() { rm -rf "${HF_HUB_DIR}/models--${1//\//--}"; }
 check_disk() { df -h /workspace | tail -1; }
 
-run_config() {
+recover_config() {
   local N=$1
+  local MODEL_DIR="pruned_models/qwen3vl-8b-${N}layer-keepfirst"
+  local OUT_DIR="output/aokvqa_qwen3vl8b_${N}layer_ffnhead_only"
+
   echo "=================================================="
-  echo "=== FFN-head (capacity-matched, hidden_dim=1024): 8b N=${N} $(date) ==="
+  echo "=== Recovering N=${N} $(date) ==="
   echo "=================================================="
 
-  local KEEP_IDX MODEL_DIR OUT_DIR
+  if [ ! -d "$OUT_DIR" ] || [ -z "$(find "$OUT_DIR" -maxdepth 1 -name 'checkpoint-[0-9]*' 2>/dev/null)" ]; then
+    echo "no surviving numbered checkpoints for N=${N} in $OUT_DIR, skipping"
+    return 1
+  fi
+
+  echo "--- re-pruning base model (needed to evaluate the surviving checkpoints) ---"
+  local KEEP_IDX
   KEEP_IDX=$(python -c "print(','.join(str(i) for i in range($N)))")
-  MODEL_DIR="pruned_models/qwen3vl-8b-${N}layer-keepfirst"
-  # must match examples/qwen3_vl/run_train_aokvqa_ffnhead_only.sh's own
-  # hardcoded --output_dir exactly -- it ignores this variable, it just
-  # computes its own path from $BACKBONE_SIZE/$N. A mismatch here (as
-  # happened on the first attempt, "_ffnhead_capctrl" vs the real
-  # "_ffnhead_only") makes the checkpoint-scan loop search an empty dir
-  # while real checkpoints land elsewhere -- training succeeds silently,
-  # only the scan/rename/cleanup below breaks.
-  OUT_DIR="output/aokvqa_qwen3vl8b_${N}layer_ffnhead_only"
-
-  echo "--- pruning ---"
   free_cache "Qwen/Qwen3-VL-2B-Instruct"
   python prune_model_generic.py --backbone Qwen/Qwen3-VL-8B-Instruct --keep_idx "$KEEP_IDX" --out_dir "$MODEL_DIR" --free_cache
-  if [ $? -ne 0 ]; then echo "PRUNE FAILED for N=${N}"; return 1; fi
+  if [ $? -ne 0 ]; then echo "RE-PRUNE FAILED for N=${N}"; return 1; fi
   check_disk
-
-  echo "--- training (frozen backbone + FFN head, hidden_dim=1024, matches 2B's ~8.39M head params) ---"
-  N=$N BACKBONE_SIZE=8b bash examples/qwen3_vl/run_train_aokvqa_ffnhead_only.sh --ffn_hidden_dim 1024
-  if [ $? -ne 0 ]; then echo "TRAIN FAILED for N=${N}"; rm -rf "$MODEL_DIR" "$OUT_DIR"; return 1; fi
 
   echo "--- scanning checkpoints ---"
   local BEST_ACC=-1 BEST_STEP="" LATEST_ACC="" step CKPT OUT ACC IS_BETTER
@@ -75,7 +58,7 @@ run_config() {
     if [ "$IS_BETTER" == "1" ]; then BEST_ACC=$ACC; BEST_STEP=$step; fi
   done
   echo "best: checkpoint-$BEST_STEP acc=$BEST_ACC ; latest: checkpoint-500 acc=$LATEST_ACC"
-  if [ -z "$BEST_STEP" ]; then echo "NO VALID CHECKPOINTS for N=${N}"; rm -rf "$MODEL_DIR" "$OUT_DIR"; return 1; fi
+  if [ -z "$BEST_STEP" ]; then echo "NO VALID CHECKPOINTS for N=${N} (real failure this time)"; rm -rf "$MODEL_DIR" "$OUT_DIR"; return 1; fi
 
   echo "--- renaming checkpoints ---"
   local BEST_CKPT_DIR
@@ -108,11 +91,8 @@ run_config() {
   rm -rf "$MODEL_DIR" "$OUT_DIR"
 
   echo "8b ${N} best_step=${BEST_STEP} best_acc=${BEST_ACC} latest_acc=${LATEST_ACC}" >> "$RESULTS"
-  echo "=== Finished capacity-control N=${N} $(date) ==="
+  echo "=== Recovered N=${N} $(date) ==="
   check_disk
 }
 
-run_config 3
-run_config 9
-
-echo "ALL PHASES DONE $(date)"
+recover_config "$1"
