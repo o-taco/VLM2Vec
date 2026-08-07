@@ -28,6 +28,7 @@ def main():
     p.add_argument("--model_name", required=True)
     p.add_argument("--model_backbone", required=True)
     p.add_argument("--checkpoint_path", required=True)
+    p.add_argument("--no_lora", action="store_true", help="load a non-LoRA checkpoint (e.g. freeze_backbone+add_ffn_head)")
     p.add_argument("--dataset_name", default="TIGER-Lab/MMEB-eval")
     p.add_argument("--subset_name", default="A-OKVQA")
     p.add_argument("--dataset_split", default="test")
@@ -48,7 +49,7 @@ def main():
         checkpoint_path=args.checkpoint_path,
         pooling="last",
         normalize=True,
-        lora=True,
+        lora=not args.no_lora,
     )
     model = MMEBModel.load(model_args, is_trainable=False)
     model = model.to("cuda", dtype=torch.bfloat16)
