@@ -1,0 +1,150 @@
+=== checkpoint-320 ===
+08/07/2026 05:38:23 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:38:23 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:38:29 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3161 acc=0.8750
+[batch 20/50] running loss=0.3037 acc=0.8750
+[batch 30/50] running loss=0.3632 acc=0.8583
+[batch 40/50] running loss=0.4137 acc=0.8375
+[batch 50/50] running loss=0.4254 acc=0.8500
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4254
+Final train top-1 accuracy (in-batch, 200 examples): 0.8500
+=== checkpoint-340 ===
+08/07/2026 05:39:02 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:39:03 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:39:09 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3160 acc=0.9000
+[batch 20/50] running loss=0.3003 acc=0.9000
+[batch 30/50] running loss=0.3468 acc=0.8917
+[batch 40/50] running loss=0.4014 acc=0.8625
+[batch 50/50] running loss=0.4127 acc=0.8700
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4127
+Final train top-1 accuracy (in-batch, 200 examples): 0.8700
+=== checkpoint-360 ===
+08/07/2026 05:39:42 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:39:43 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:39:49 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3311 acc=0.8750
+[batch 20/50] running loss=0.3003 acc=0.8750
+[batch 30/50] running loss=0.3433 acc=0.8750
+[batch 40/50] running loss=0.4014 acc=0.8562
+[batch 50/50] running loss=0.4194 acc=0.8600
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4194
+Final train top-1 accuracy (in-batch, 200 examples): 0.8600
+=== checkpoint-380 ===
+08/07/2026 05:40:22 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:40:23 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:40:28 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3008 acc=0.9000
+[batch 20/50] running loss=0.2849 acc=0.9000
+[batch 30/50] running loss=0.3402 acc=0.9000
+[batch 40/50] running loss=0.3931 acc=0.8750
+[batch 50/50] running loss=0.4107 acc=0.8800
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4107
+Final train top-1 accuracy (in-batch, 200 examples): 0.8800
+=== checkpoint-400 ===
+08/07/2026 05:41:01 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:41:02 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:41:07 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3274 acc=0.8750
+[batch 20/50] running loss=0.2969 acc=0.8875
+[batch 30/50] running loss=0.3460 acc=0.8917
+[batch 40/50] running loss=0.3961 acc=0.8688
+[batch 50/50] running loss=0.4120 acc=0.8650
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4120
+Final train top-1 accuracy (in-batch, 200 examples): 0.8650
+=== checkpoint-420 ===
+08/07/2026 05:41:41 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:41:42 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:41:48 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3153 acc=0.8750
+[batch 20/50] running loss=0.2911 acc=0.8875
+[batch 30/50] running loss=0.3624 acc=0.8583
+[batch 40/50] running loss=0.4103 acc=0.8438
+[batch 50/50] running loss=0.4244 acc=0.8450
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4244
+Final train top-1 accuracy (in-batch, 200 examples): 0.8450
+=== checkpoint-440 ===
+08/07/2026 05:42:21 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:42:22 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:42:28 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3137 acc=0.8500
+[batch 20/50] running loss=0.2873 acc=0.8750
+[batch 30/50] running loss=0.3551 acc=0.8583
+[batch 40/50] running loss=0.4011 acc=0.8438
+[batch 50/50] running loss=0.4153 acc=0.8500
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4153
+Final train top-1 accuracy (in-batch, 200 examples): 0.8500
+=== checkpoint-460 ===
+08/07/2026 05:43:01 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:43:02 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:43:08 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.3160 acc=0.8500
+[batch 20/50] running loss=0.2901 acc=0.8750
+[batch 30/50] running loss=0.3626 acc=0.8583
+[batch 40/50] running loss=0.4085 acc=0.8438
+[batch 50/50] running loss=0.4139 acc=0.8600
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4139
+Final train top-1 accuracy (in-batch, 200 examples): 0.8600
+=== checkpoint-480 ===
+08/07/2026 05:43:41 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:43:42 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:43:47 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.2934 acc=0.8750
+[batch 20/50] running loss=0.2773 acc=0.9000
+[batch 30/50] running loss=0.3396 acc=0.8917
+[batch 40/50] running loss=0.4000 acc=0.8688
+[batch 50/50] running loss=0.4087 acc=0.8650
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4087
+Final train top-1 accuracy (in-batch, 200 examples): 0.8650
+=== checkpoint-500 ===
+08/07/2026 05:44:20 - INFO - datasets -   PyTorch version 2.4.0 available.
+08/07/2026 05:44:21 - INFO - src.utils -   Loading backbone [qwen3_vl]
+`torch_dtype` is deprecated! Use `dtype` instead!
+08/07/2026 05:44:27 - INFO - src.utils -   Loading processor
+Loaded 200 train rows -> 50 batches of 4 (matches training's per_device_train_batch_size)
+You're using a Qwen2TokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[batch 10/50] running loss=0.2847 acc=0.8750
+[batch 20/50] running loss=0.2723 acc=0.8750
+[batch 30/50] running loss=0.3306 acc=0.8583
+[batch 40/50] running loss=0.3850 acc=0.8438
+[batch 50/50] running loss=0.4025 acc=0.8450
+
+Final train loss over 50 batches of 4 (in-batch negatives, temperature=0.02): 0.4025
+Final train top-1 accuracy (in-batch, 200 examples): 0.8450
