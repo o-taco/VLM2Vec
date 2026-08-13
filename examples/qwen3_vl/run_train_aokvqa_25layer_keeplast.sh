@@ -1,0 +1,45 @@
+#!/bin/bash
+# Part of the front-drop ("keeplast") sweep: keep layers 0,1,2 (deepstack
+# recipients) plus the tail 6..27, dropping layers 3-5 -- opposite end from
+# keepfirst. keepmid (N=19, drop 3..11,
+# 32.1% pruned) already collapsed to ~32% accuracy near the 25% chance floor;
+# this is a finer-grained point testing where between 0% and that collapse
+# actually sets in.
+set -euo pipefail
+cd "$(dirname "$0")/../.."  # repo root
+
+WANDB_DISABLED=true \
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+python train.py \
+  --model_name pruned_models/qwen3vl-2b-25layer-keeplast \
+  --model_backbone qwen3_vl \
+  --pooling last \
+  --normalize True \
+  --temperature 0.02 \
+  --lora \
+  --lora_r 8 \
+  --lora_alpha 16 \
+  --lora_dropout 0.0 \
+  --lora_target_modules "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj" \
+  --bf16 \
+  --gradient_checkpointing \
+  --gradient_checkpointing_kwargs '{"use_reentrant": false}' \
+  --dataset_name TIGER-Lab/MMEB-train \
+  --subset_name A-OKVQA \
+  --split_name original \
+  --image_dir data \
+  --image_resolution 336 \
+  --output_dir output/aokvqa_qwen3vl_25layer_keeplast \
+  --max_steps "${MAX_STEPS:-500}" \
+  --per_device_train_batch_size "${BATCH_SIZE:-64}" \
+  --grad_cache True \
+  --gc_q_chunk_size "${GC_CHUNK_SIZE:-8}" \
+  --gc_p_chunk_size "${GC_CHUNK_SIZE:-8}" \
+  --max_len 512 \
+  --learning_rate 1e-5 \
+  --logging_steps 10 \
+  --save_steps "${SAVE_STEPS:-20}" \
+  --save_total_limit 10 \
+  --remove_unused_columns False \
+  --report_to none \
+  "$@"
