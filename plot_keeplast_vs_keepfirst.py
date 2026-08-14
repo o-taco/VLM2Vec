@@ -2,17 +2,20 @@
 27, drop a contiguous block right after the deepstack prefix) vs. the
 existing back-drop ("keepfirst": keep 0..N-1, drop the tail) dose-response
 curve, both on Qwen3-VL-2B / A-OKVQA in-batch accuracy (batch=4, chance=25%).
+Now ratio-matched across keepfirst's full range (0-75% pruned) for a direct
+point-by-point comparison, not just a curve-shape comparison.
 
 Data sources:
 - keepfirst: logs/depth_pruning_keepfirst/keepfirst_sweep_results.txt
   (x0 shared baseline 84.0/85.0 best/latest reused from
   plot_pruning_accuracy_v3_with_probe.py, per that script's own note that
   it's read off the original figure's data-labels, no surviving raw log).
-- keeplast: logs/depth_pruning_keeplast/keeplast_sweep_results.txt (this
-  session's Phase A sweep, N=27/26/25/23) plus the x=32.1 point, which is
-  exactly the keeplast recipe at N=19 (keep 0,1,2 + 12..27) already run
-  under the name "keepmid" -- same keep_idx, reused from
-  plot_pruning_accuracy_v3_with_probe.py's keepmid_best/latest.
+- keeplast: logs/depth_pruning_keeplast/keeplast_sweep_results.txt, Phase A
+  (N=27/26/25/23, 3.6-17.9pct) + Phase B (N=21/20/18/14/7, 25-75pct,
+  ratio-matched to keepfirst's own x values) -- both from this session.
+  Plus the x=32.1 point, which is exactly the keeplast recipe at N=19 (keep
+  0,1,2 + 12..27) already run under the name "keepmid" -- same keep_idx,
+  reused from plot_pruning_accuracy_v3_with_probe.py's keepmid_best/latest.
 """
 import matplotlib.pyplot as plt
 
@@ -25,9 +28,11 @@ kf_best = [x0_best, 80.0, 77.5, 75.0, 77.5, 69.0]
 kf_latest = [x0_latest, 77.5, 75.5, 75.0, 76.0, 68.5]
 
 # --- keep-last-N (drop a block right after the deepstack prefix) ---
-kl_x = [0, 3.6, 7.1, 10.7, 17.9, 32.1]
-kl_best = [x0_best, 79.0, 72.0, 64.5, 51.5, 36.0]
-kl_latest = [x0_latest, 76.5, 72.0, 64.5, 51.5, 32.0]
+# Phase A (3.6-17.9pct) + keepmid reused point (32.1pct) + Phase B
+# (25-75pct, ratio-matched to kf_x).
+kl_x = [0, 3.6, 7.1, 10.7, 17.9, 25, 28.6, 32.1, 35.7, 50, 75]
+kl_best = [x0_best, 79.0, 72.0, 64.5, 51.5, 50.5, 42.5, 36.0, 39.5, 37.5, 32.0]
+kl_latest = [x0_latest, 76.5, 72.0, 64.5, 51.5, 50.5, 42.0, 32.0, 38.0, 37.0, 30.5]
 
 fig, ax = plt.subplots(figsize=(9, 6))
 

@@ -11,9 +11,14 @@ than reused from the old image:
   Note: keep-first-N has NO measured point at 32.1% (19-layer) -- confirmed
   by zooming into the original PNG's cliff region, where the line passes
   through that x with no diamond marker. Do not interpolate one in.
-- keep-26 / keep-mid ablations: train_acc_19layer_keep26_*.log and
-  keepmid_acc_scan.log (best = max across all logged checkpoints, latest =
-  step-500 value).
+- keep-26 ablation: train_acc_19layer_keep26_*.log (best = max across all
+  logged checkpoints, latest = step-500 value).
+- Keep-last-N (front-drop): logs/depth_pruning_keeplast/keeplast_sweep_results.txt,
+  Phase A+B (this repo's most recent sweep) -- full 0-75pct range,
+  ratio-matched to keep-first-N's own x values. Its 32.1pct point IS the old
+  "keep-mid" single-seam ablation (same keep_idx, keepmid_best/latest =
+  36.0/32.0) -- now folded into the curve instead of a standalone scatter
+  point, per plot_keeplast_vs_keepfirst.py's own note on that equivalence.
 - x=0 (shared by both patterns, since 0% pruned is the same unpruned model):
   84.0/85.0 best/latest -- read directly off the original figure's own
   printed data-labels (not from any surviving raw log for this point).
@@ -38,9 +43,13 @@ kf_x = [0, 25, 28.6, 35.7, 50, 75]
 kf_best = [x0_best, 80.0, 77.5, 75.0, 77.5, 69.0]
 kf_latest = [x0_latest, 77.5, 75.5, 75.0, 76.0, 68.5]
 
-# --- ablations, single point each at 32.1% (19-layer) ---
+# --- keep-26 ablation, single point at 32.1% (19-layer) ---
 keep26_best, keep26_latest = 50.5, 52.0
-keepmid_best, keepmid_latest = 36.0, 32.0
+
+# --- keep-last-N (drop right after the deepstack prefix, front-drop) ---
+kl_x = [0, 3.6, 7.1, 10.7, 17.9, 25, 28.6, 32.1, 35.7, 50, 75]
+kl_best = [x0_best, 79.0, 72.0, 64.5, 51.5, 50.5, 42.5, 36.0, 39.5, 37.5, 32.0]
+kl_latest = [x0_latest, 76.5, 72.0, 64.5, 51.5, 50.5, 42.0, 32.0, 38.0, 37.0, 30.5]
 
 # --- linear probe (real A-OKVQA question_accuracy), keep-first-N depths ---
 probe_depths = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
@@ -52,27 +61,39 @@ probe_y = [a * 100 for a in probe_accs]
 # sort by x ascending for a clean line
 probe_x, probe_y = zip(*sorted(zip(probe_x, probe_y)))
 
-fig, ax = plt.subplots(figsize=(11, 7))
+fig, ax = plt.subplots(figsize=(9, 6))
 
 ax.plot(alt_x, alt_best, marker="o", color="#1f77b4", linewidth=2, markersize=7,
-        label="Best checkpoint (evenly spaced)")
+        label="Evenly spaced, best ckpt.")
 ax.plot(alt_x, alt_latest, marker="o", color="#ff7f0e", linewidth=2, markersize=7,
-        label="Latest checkpoint, step 500 (evenly spaced)")
+        label="Evenly spaced, latest ckpt.")
 ax.plot(kf_x, kf_best, marker="D", color="#9467bd", linewidth=2, markersize=8,
-        label="Contiguous drop (keep-first-N), best checkpoint")
+        label="Keep-first-N, best ckpt.")
 ax.plot(kf_x, kf_latest, marker="D", color="#9467bd", linewidth=2, markersize=7,
-        linestyle="--", alpha=0.85, label="Contiguous drop (keep-first-N), latest checkpoint")
+        linestyle="--", alpha=0.85, label="Keep-first-N, latest ckpt.")
 ax.plot(probe_x, probe_y, marker="^", color="#17becf", linewidth=2, markersize=7,
-        label="Keep-first-N, linear probe (real question_accuracy)")
+        label="Keep-first-N, linear probe (real acc.)")
+ax.plot(kl_x, kl_best, marker="s", color="#8c564b", linewidth=2, markersize=8,
+        label="Keep-last-N (front-drop), best ckpt.")
+ax.plot(kl_x, kl_latest, marker="s", color="#8c564b", linewidth=2, markersize=7,
+        linestyle="--", alpha=0.85, label="Keep-last-N (front-drop), latest ckpt.")
 
-ax.scatter([32.1], [keep26_best], marker="*", s=260, color="#2ca02c", zorder=5,
-           label="19L keep-26 ablation (best)")
-ax.scatter([32.1], [keep26_latest], marker="*", s=260, color="#d62728", zorder=5,
-           label="19L keep-26 ablation (latest)")
-ax.scatter([32.1], [keepmid_best], marker="s", s=110, color="#8c564b", zorder=5,
-           label="19L keep-mid ablation (best, single mid-stack seam)")
-ax.scatter([32.1], [keepmid_latest], marker="s", s=110, color="#cd853f", zorder=5,
-           label="19L keep-mid ablation (latest, single mid-stack seam)")
+# The remaining 19L single-seam ablation (keep-26) sits at x=32.1 and would
+# land right on top of the cliff/keep-last-N curves at that size, so: nudge
+# it apart slightly in x, and add a white edge so it stays visually
+# separable. A dotted guide line + "19L" tag ties it back to its true x
+# position. (The old "keep-mid" ablation used to get the same treatment, but
+# it's exactly the keep-last-N curve's own x=32.1 point -- see docstring --
+# so it's just part of that curve now instead of a duplicate scatter point.)
+ax.axvline(32.1, color="0.65", linestyle=":", linewidth=1, zorder=1)
+ax.annotate("19L", (32.1, 99), ha="center", va="top", fontsize=7.5, color="0.45")
+
+ax.scatter([31.5], [keep26_best], marker="*", s=130, color="#2ca02c",
+           edgecolors="white", linewidths=1.2, zorder=6,
+           label="19L keep-26, best")
+ax.scatter([32.7], [keep26_latest], marker="*", s=130, color="#d62728",
+           edgecolors="white", linewidths=1.2, zorder=6,
+           label="19L keep-26, latest")
 
 ax.axhline(25, color="0.5", linestyle=":", linewidth=1.5, label="Chance (25%)")
 
@@ -89,12 +110,15 @@ ax.annotate(f"{probe_y[probe_peak_i]:.1f}%", (probe_x[probe_peak_i], probe_y[pro
             textcoords="offset points", xytext=(0, 10), ha="center", fontsize=9,
             color="#17becf", fontweight="bold")
 
-for x, y, color in [(32.1, keep26_best, "#2ca02c"), (32.1, keep26_latest, "#d62728")]:
-    ax.annotate(f"{y:.1f}%", (x, y), textcoords="offset points", xytext=(12, 4),
-                ha="left", fontsize=8.5, color=color, fontweight="bold")
-for x, y, color in [(32.1, keepmid_best, "#8c564b"), (32.1, keepmid_latest, "#cd853f")]:
-    ax.annotate(f"{y:.1f}%", (x, y), textcoords="offset points", xytext=(12, -3),
-                ha="left", fontsize=8.5, color=color, fontweight="bold")
+ax.annotate(f"{keep26_latest:.1f}%", (32.7, keep26_latest), textcoords="offset points",
+            xytext=(10, 14), ha="left", fontsize=8.5, color="#d62728", fontweight="bold")
+ax.annotate(f"{keep26_best:.1f}%", (31.5, keep26_best), textcoords="offset points",
+            xytext=(-12, 16), ha="right", fontsize=8.5, color="#2ca02c", fontweight="bold")
+
+ax.annotate(f"{kl_best[-1]:.1f}%", (kl_x[-1], kl_best[-1]), textcoords="offset points",
+            xytext=(8, 6), ha="left", fontsize=9, color="#8c564b", fontweight="bold")
+ax.annotate(f"{kl_latest[-1]:.1f}%", (kl_x[-1], kl_latest[-1]), textcoords="offset points",
+            xytext=(8, -14), ha="left", fontsize=9, color="#8c564b", fontweight="bold")
 
 ax.set_xlim(-3, 83)
 ax.set_ylim(0, 100)
@@ -102,19 +126,15 @@ ax.set_xlabel("% of decoder layers pruned")
 ax.set_ylabel("Accuracy (%)")
 ax.set_title(
     "Qwen3-VL-2B depth pruning vs A-OKVQA accuracy\n"
-    "alternating drop (cliff) vs. contiguous keep-first-N vs. the real linear-probe floor",
+    "alternating drop (cliff) vs. keep-first-N (back-drop) vs. keep-last-N (front-drop) vs. the real linear-probe floor",
     fontsize=12,
 )
-ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=8.5, framealpha=0.9)
+legend = ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=4, fontsize=8.2,
+                    framealpha=0.9, columnspacing=1.1, handletextpad=0.5)
 ax.grid(True, alpha=0.3)
 
-fig.text(0.01, -0.03,
-         "Note: all curves except \"linear probe\" use the in-batch 4-way training-accuracy proxy metric; the linear-probe\n"
-         "curve uses real A-OKVQA question_accuracy (a properly-evaluated multiple-choice metric). Both are chance=25%,\n"
-         "but treat cross-curve deltas as indicative, not exactly equivalent (see compute_train_accuracy.py vs. the real eval).",
-         fontsize=8, color="0.4", va="top")
+fig.tight_layout()
 
-fig.tight_layout(rect=(0, 0.03, 1, 1))
 fig.savefig("figures/depth_pruning/pruning_accuracy_v3_with_probe.png", dpi=150, bbox_inches="tight")
 fig.savefig("figures/depth_pruning/pruning_accuracy_v3_with_probe.pdf", bbox_inches="tight")
 print("saved figures/depth_pruning/pruning_accuracy_v3_with_probe.{png,pdf}")

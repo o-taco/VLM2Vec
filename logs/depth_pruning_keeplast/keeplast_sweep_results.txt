@@ -2,3 +2,8 @@
 26 7.1pct keeplast best_step=380 best_acc=0.7200 latest_acc=0.7200
 25 10.7pct keeplast best_step=420 best_acc=0.6450 latest_acc=0.6450
 23 17.9pct keeplast best_step=380 best_acc=0.5150 latest_acc=0.5150
+21 25pct keeplast best_step=500 best_acc=0.5050 latest_acc=0.5050
+20 28.6pct keeplast best_step=460 best_acc=0.4250 latest_acc=0.4200
+18 35.7pct keeplast best_step=480 best_acc=0.3950 latest_acc=0.3800
+14 50pct keeplast best_step=440 best_acc=0.3750 latest_acc=0.3700
+7 75pct keeplast best_step=440 best_acc=0.3200 latest_acc=0.3050
