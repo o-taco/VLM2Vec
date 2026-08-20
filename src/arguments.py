@@ -63,7 +63,16 @@ class ModelArguments:
         metadata={"help": "attach a small residual 2-layer FFN (Linear-GELU-Linear) after pooling, before "
                            "normalization, trained jointly with the contrastive loss. Combined with "
                            "--freeze_backbone and --lora False, isolates how much of the training gain comes from "
-                           "reshaping the readout embedding space rather than adapting internal representations."}
+                           "reshaping the readout embedding space rather than adapting internal representations. "
+                           "NOTE: despite being called a 'linear probe' in some places, this head is nonlinear "
+                           "(has a GELU) -- use --add_linear_head for a genuine linear probe."}
+    )
+    add_linear_head: bool = field(
+        default=False,
+        metadata={"help": "attach a single residual nn.Linear (no hidden layer, no activation) after pooling, "
+                           "before normalization -- a genuine linear probe, unlike --add_ffn_head's 2-layer "
+                           "nonlinear MLP. Mutually exclusive in practice with --add_ffn_head; reuses "
+                           "--ffn_residual for the zero-init/identity-start behavior."}
     )
     ffn_hidden_dim: int = field(
         default=None,

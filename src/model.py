@@ -14,6 +14,8 @@ from src.vlm_backbone.qwen3_vl import patch_vision_patch_embed_for_volta
 
 FFN_HEAD_WEIGHTS_NAME = 'ffn_head.pt'
 FFN_HEAD_CONFIG_NAME = 'ffn_head_config.json'
+LINEAR_HEAD_WEIGHTS_NAME = 'linear_head.pt'
+LINEAR_HEAD_CONFIG_NAME = 'linear_head_config.json'
 
 
 def _get_hidden_size(config) -> int:
@@ -47,6 +49,27 @@ class FFNHead(nn.Module):
         return x + out if self.residual else out
 
 
+class LinearHead(nn.Module):
+    """Genuine linear probe: a single nn.Linear applied to the pooled embedding,
+    no hidden layer, no activation -- unlike FFNHead, which is a 2-layer
+    nonlinear MLP despite the "linear probe" name some configs use for it. In
+    residual mode the layer is zero-initialized so it starts as an exact
+    identity function, same rationale as FFNHead's residual mode."""
+
+    def __init__(self, dim: int, residual: bool = True):
+        super().__init__()
+        self.dim = dim
+        self.residual = residual
+        self.proj = nn.Linear(dim, dim)
+        if residual:
+            nn.init.zeros_(self.proj.weight)
+            nn.init.zeros_(self.proj.bias)
+
+    def forward(self, x: Tensor) -> Tensor:
+        out = self.proj(x)
+        return x + out if self.residual else out
+
+
 class MMEBModel(nn.Module):
     TRANSFORMER_CLS = AutoModelForCausalLM
 
@@ -63,6 +86,7 @@ class MMEBModel(nn.Module):
         self.normalize = normalize
         self.temperature = temperature
         self.ffn_head = None
+        self.linear_head = None
         self.cross_entropy = nn.CrossEntropyLoss(reduction='mean')
 
     def add_ffn_head(self, hidden_dim: int = None, residual: bool = True) -> FFNHead:
@@ -70,6 +94,12 @@ class MMEBModel(nn.Module):
         param = next(self.encoder.parameters())
         self.ffn_head = FFNHead(dim, hidden_dim or dim, residual=residual).to(device=param.device, dtype=param.dtype)
         return self.ffn_head
+
+    def add_linear_head(self, residual: bool = True) -> LinearHead:
+        dim = _get_hidden_size(self.config)
+        param = next(self.encoder.parameters())
+        self.linear_head = LinearHead(dim, residual=residual).to(device=param.device, dtype=param.dtype)
+        return self.linear_head
 
     def gradient_checkpointing_enable(self, **kwargs):
         self.encoder.gradient_checkpointing_enable(**kwargs)
@@ -88,6 +118,8 @@ class MMEBModel(nn.Module):
         reps = self._pool(hidden_states, input['attention_mask'])
         if self.ffn_head is not None:
             reps = self.ffn_head(reps)
+        if self.linear_head is not None:
+            reps = self.linear_head(reps)
         if self.normalize:
             reps = torch.nn.functional.normalize(reps, p=2, dim=-1)
         return reps
@@ -203,6 +235,8 @@ class MMEBModel(nn.Module):
 
         if model_args.add_ffn_head:
             model.add_ffn_head(hidden_dim=model_args.ffn_hidden_dim, residual=model_args.ffn_residual)
+        if model_args.add_linear_head:
+            model.add_linear_head(residual=model_args.ffn_residual)
 
         return model
 
@@ -275,6 +309,16 @@ class MMEBModel(nn.Module):
             if not is_trainable:
                 model.ffn_head.eval()
 
+        linear_head_config_path = os.path.join(checkpoint_path, LINEAR_HEAD_CONFIG_NAME)
+        if os.path.exists(linear_head_config_path):
+            with open(linear_head_config_path) as f:
+                head_cfg = json.load(f)
+            model.add_linear_head(residual=head_cfg['residual'])
+            state_dict = torch.load(os.path.join(checkpoint_path, LINEAR_HEAD_WEIGHTS_NAME), map_location='cpu', weights_only=True)
+            model.linear_head.load_state_dict(state_dict)
+            if not is_trainable:
+                model.linear_head.eval()
+
         return model
 
     def save(self, output_dir: str):
@@ -283,6 +327,10 @@ class MMEBModel(nn.Module):
             torch.save(self.ffn_head.state_dict(), os.path.join(output_dir, FFN_HEAD_WEIGHTS_NAME))
             with open(os.path.join(output_dir, FFN_HEAD_CONFIG_NAME), 'w') as f:
                 json.dump({'hidden_dim': self.ffn_head.hidden_dim, 'residual': self.ffn_head.residual}, f)
+        if self.linear_head is not None:
+            torch.save(self.linear_head.state_dict(), os.path.join(output_dir, LINEAR_HEAD_WEIGHTS_NAME))
+            with open(os.path.join(output_dir, LINEAR_HEAD_CONFIG_NAME), 'w') as f:
+                json.dump({'residual': self.linear_head.residual}, f)
 
     def forward(self, qry: Dict[str, Tensor] = None, tgt: Dict[str, Tensor] = None, *args, **kwargs):
         qry_reps = self.encode_input(qry) if qry else None  # (bsz_per_device, dim)
