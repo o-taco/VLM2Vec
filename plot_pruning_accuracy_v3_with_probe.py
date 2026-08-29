@@ -43,9 +43,6 @@ kf_x = [0, 25, 28.6, 35.7, 50, 75]
 kf_best = [x0_best, 80.0, 77.5, 75.0, 77.5, 69.0]
 kf_latest = [x0_latest, 77.5, 75.5, 75.0, 76.0, 68.5]
 
-# --- keep-26 ablation, single point at 32.1% (19-layer) ---
-keep26_best, keep26_latest = 50.5, 52.0
-
 # --- keep-last-N (drop right after the deepstack prefix, front-drop) ---
 kl_x = [0, 3.6, 7.1, 10.7, 17.9, 25, 28.6, 32.1, 35.7, 50, 75]
 kl_best = [x0_best, 79.0, 72.0, 64.5, 51.5, 50.5, 42.5, 36.0, 39.5, 37.5, 32.0]
@@ -61,7 +58,7 @@ probe_y = [a * 100 for a in probe_accs]
 # sort by x ascending for a clean line
 probe_x, probe_y = zip(*sorted(zip(probe_x, probe_y)))
 
-fig, ax = plt.subplots(figsize=(9, 6))
+fig, ax = plt.subplots(figsize=(5.5, 6.5))
 
 ax.plot(alt_x, alt_best, marker="o", color="#1f77b4", linewidth=2, markersize=7,
         label="Evenly spaced, best ckpt.")
@@ -78,23 +75,6 @@ ax.plot(kl_x, kl_best, marker="s", color="#8c564b", linewidth=2, markersize=8,
 ax.plot(kl_x, kl_latest, marker="s", color="#8c564b", linewidth=2, markersize=7,
         linestyle="--", alpha=0.85, label="Keep-last-N (front-drop), latest ckpt.")
 
-# The remaining 19L single-seam ablation (keep-26) sits at x=32.1 and would
-# land right on top of the cliff/keep-last-N curves at that size, so: nudge
-# it apart slightly in x, and add a white edge so it stays visually
-# separable. A dotted guide line + "19L" tag ties it back to its true x
-# position. (The old "keep-mid" ablation used to get the same treatment, but
-# it's exactly the keep-last-N curve's own x=32.1 point -- see docstring --
-# so it's just part of that curve now instead of a duplicate scatter point.)
-ax.axvline(32.1, color="0.65", linestyle=":", linewidth=1, zorder=1)
-ax.annotate("19L", (32.1, 99), ha="center", va="top", fontsize=7.5, color="0.45")
-
-ax.scatter([31.5], [keep26_best], marker="*", s=130, color="#2ca02c",
-           edgecolors="white", linewidths=1.2, zorder=6,
-           label="19L keep-26, best")
-ax.scatter([32.7], [keep26_latest], marker="*", s=130, color="#d62728",
-           edgecolors="white", linewidths=1.2, zorder=6,
-           label="19L keep-26, latest")
-
 ax.axhline(25, color="0.5", linestyle=":", linewidth=1.5, label="Chance (25%)")
 
 # --- peak annotations: the highest point on each curve/series ---
@@ -110,11 +90,6 @@ ax.annotate(f"{probe_y[probe_peak_i]:.1f}%", (probe_x[probe_peak_i], probe_y[pro
             textcoords="offset points", xytext=(0, 10), ha="center", fontsize=9,
             color="#17becf", fontweight="bold")
 
-ax.annotate(f"{keep26_latest:.1f}%", (32.7, keep26_latest), textcoords="offset points",
-            xytext=(10, 14), ha="left", fontsize=8.5, color="#d62728", fontweight="bold")
-ax.annotate(f"{keep26_best:.1f}%", (31.5, keep26_best), textcoords="offset points",
-            xytext=(-12, 16), ha="right", fontsize=8.5, color="#2ca02c", fontweight="bold")
-
 ax.annotate(f"{kl_best[-1]:.1f}%", (kl_x[-1], kl_best[-1]), textcoords="offset points",
             xytext=(8, 6), ha="left", fontsize=9, color="#8c564b", fontweight="bold")
 ax.annotate(f"{kl_latest[-1]:.1f}%", (kl_x[-1], kl_latest[-1]), textcoords="offset points",
@@ -124,17 +99,14 @@ ax.set_xlim(-3, 83)
 ax.set_ylim(0, 100)
 ax.set_xlabel("% of decoder layers pruned")
 ax.set_ylabel("Accuracy (%)")
-ax.set_title(
-    "Qwen3-VL-2B depth pruning vs A-OKVQA accuracy\n"
-    "alternating drop (cliff) vs. keep-first-N (back-drop) vs. keep-last-N (front-drop) vs. the real linear-probe floor",
-    fontsize=12,
-)
-legend = ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=4, fontsize=8.2,
+legend = ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=2, fontsize=8.2,
                     framealpha=0.9, columnspacing=1.1, handletextpad=0.5)
 ax.grid(True, alpha=0.3)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
 
-fig.tight_layout()
+fig.subplots_adjust(left=0.13, right=0.97, top=0.96, bottom=0.40)
 
-fig.savefig("figures/depth_pruning/pruning_accuracy_v3_with_probe.png", dpi=150, bbox_inches="tight")
-fig.savefig("figures/depth_pruning/pruning_accuracy_v3_with_probe.pdf", bbox_inches="tight")
+fig.savefig("figures/depth_pruning/pruning_accuracy_v3_with_probe.png", dpi=150)
+fig.savefig("figures/depth_pruning/pruning_accuracy_v3_with_probe.pdf")
 print("saved figures/depth_pruning/pruning_accuracy_v3_with_probe.{png,pdf}")
