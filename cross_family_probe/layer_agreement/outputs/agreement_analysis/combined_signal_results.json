@@ -1,0 +1,34 @@
+{
+  "margin_only": {
+    "mean_auroc": 0.8330453269926954,
+    "std_auroc": 0.015718327783764995
+  },
+  "plurality_only": {
+    "mean_auroc": 0.7478475033738191,
+    "std_auroc": 0.0439549805718227
+  },
+  "agree_with_final_only": {
+    "mean_auroc": 0.7575245806824754,
+    "std_auroc": 0.0392286500775158
+  },
+  "margin + plurality": {
+    "mean_auroc": 0.8357956857956859,
+    "std_auroc": 0.011727030329735771
+  },
+  "margin + agree_with_final": {
+    "mean_auroc": 0.8394705781547886,
+    "std_auroc": 0.012191428224675113
+  },
+  "margin + entropy": {
+    "mean_auroc": 0.832722511406722,
+    "std_auroc": 0.015869447611381822
+  },
+  "margin + late_plurality": {
+    "mean_auroc": 0.8408069318595635,
+    "std_auroc": 0.014016851520424383
+  },
+  "margin + plurality + entropy": {
+    "mean_auroc": 0.8320664910138594,
+    "std_auroc": 0.015620316150694894
+  }
+}
