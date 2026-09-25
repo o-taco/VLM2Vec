@@ -1,0 +1,47 @@
+[eval] validation rows=1145
+[eval] 8/1145
+[eval] 88/1145
+[eval] 168/1145
+[eval] 248/1145
+[eval] 328/1145
+[eval] 408/1145
+[eval] 488/1145
+[eval] 568/1145
+[eval] 648/1145
+[eval] 728/1145
+[eval] 808/1145
+[eval] 888/1145
+[eval] 968/1145
+[eval] 1048/1145
+[eval] 1128/1145
+{
+  "n": 1145,
+  "full_depth28_accuracy": 0.8148471615720524,
+  "routed_accuracy": 0.8034934497816594,
+  "routed_mean_depth": 13.991266375545852,
+  "routed_coverage_before_fallback": 1.0,
+  "zero_shot_accuracy": 0.24890829694323144,
+  "thresholds_used": {
+    "8": {
+      "threshold": 0.9368309378623962,
+      "coverage": 0.20906604142243063,
+      "precision": 0.9009345769882202
+    },
+    "12": {
+      "threshold": 0.8498976826667786,
+      "coverage": 0.5474794841735052,
+      "precision": 0.900071382522583
+    },
+    "20": {
+      "threshold": 0.9762319922447205,
+      "coverage": 1.0,
+      "precision": 0.9761625528335571
+    },
+    "28": {
+      "threshold": 0.9998579025268555,
+      "coverage": 1.0,
+      "precision": 1.0
+    }
+  }
+}
+[eval] wrote early_exit_probe/outputs/phase1_run1/checkpoint-500/eval_results.json

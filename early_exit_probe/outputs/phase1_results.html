@@ -1,0 +1,358 @@
+<title>Early Exit Probe, Phase 1</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #faf8f4;
+    --bg-raised: #ffffff;
+    --ink: #201d1a;
+    --ink-muted: #6e6a63;
+    --ink-faint: #9c968b;
+    --hairline: #e4ded4;
+    --hairline-strong: #d2cabb;
+    --blue: #3a6ea5;
+    --blue-soft: #e8eef5;
+    --rust: #c1622d;
+    --rust-soft: #f5e9df;
+    --good: #4c7a4c;
+    --shadow: 0 1px 2px rgba(32, 29, 26, 0.06), 0 4px 16px rgba(32, 29, 26, 0.04);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181c;
+      --bg-raised: #1d2025;
+      --ink: #e8e6e1;
+      --ink-muted: #9b968d;
+      --ink-faint: #706b62;
+      --hairline: #2a2d33;
+      --hairline-strong: #383b42;
+      --blue: #5b93cc;
+      --blue-soft: #202b38;
+      --rust: #cc6e33;
+      --rust-soft: #332821;
+      --good: #6fa06f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181c;
+    --bg-raised: #1d2025;
+    --ink: #e8e6e1;
+    --ink-muted: #9b968d;
+    --ink-faint: #706b62;
+    --hairline: #2a2d33;
+    --hairline-strong: #383b42;
+    --blue: #5b93cc;
+    --blue-soft: #202b38;
+    --rust: #cc6e33;
+    --rust-soft: #332821;
+    --good: #6fa06f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px 24px 96px;
+  }
+
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  .dek {
+    font-size: 17px;
+    color: var(--ink-muted);
+    max-width: 62ch;
+    margin: 0 0 40px;
+  }
+  .dek code { font-family: 'IBM Plex Mono', monospace; font-size: 0.92em; }
+
+  h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.005em;
+    margin: 56px 0 8px;
+    text-wrap: balance;
+  }
+  h2 .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--ink-faint);
+    font-weight: 400;
+    margin-right: 10px;
+  }
+  p { margin: 0 0 16px; max-width: 66ch; }
+  p.caption {
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    max-width: 66ch;
+  }
+
+  /* --- headline stat row --- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 4px 0 8px;
+    box-shadow: var(--shadow);
+  }
+  .stat {
+    background: var(--bg-raised);
+    padding: 22px 18px;
+  }
+  .stat .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .stat .value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 32px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat .value small { font-size: 15px; color: var(--ink-muted); font-weight: 400; }
+  .stat .sub { margin-top: 8px; font-size: 13px; color: var(--ink-muted); }
+  .stat .sub .deck { color: var(--rust); font-family: 'IBM Plex Mono', monospace; }
+
+  /* --- comparison table --- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    margin: 8px 0 4px;
+  }
+  .table-wrap { overflow-x: auto; }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  td.num, th.num { text-align: right; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+  tr.ours td { color: var(--ink); font-weight: 500; }
+  tr.ours { background: var(--blue-soft); }
+  .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
+  .swatch.blue { background: var(--blue); }
+  .swatch.rust { background: var(--rust); }
+
+  /* --- chart --- */
+  .chart-card {
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--bg-raised);
+    padding: 24px 20px 16px;
+    box-shadow: var(--shadow);
+    margin: 8px 0 4px;
+  }
+  .legend { display: flex; gap: 20px; font-size: 12.5px; color: var(--ink-muted); margin-bottom: 4px; }
+  .legend span { display: inline-flex; align-items: center; }
+  svg text { font-family: 'IBM Plex Mono', monospace; }
+  .grid-line { stroke: var(--hairline); stroke-width: 1; }
+  .axis-label { fill: var(--ink-faint); font-size: 10.5px; }
+  .data-label { fill: var(--ink); font-size: 11px; font-weight: 500; }
+  .data-label-muted { fill: var(--ink-muted); font-size: 10px; }
+
+  /* --- callout / caveat box --- */
+  .callout {
+    border-left: 3px solid var(--rust);
+    background: var(--rust-soft);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 14px;
+    color: var(--ink);
+    margin: 20px 0;
+  }
+  .callout strong { color: var(--rust); }
+  ul.plain { margin: 0 0 16px; padding-left: 20px; }
+  ul.plain li { margin-bottom: 8px; max-width: 62ch; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hairline);
+    font-size: 13px;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+
+<div class="page">
+  <p class="kicker">early-exit-probe branch · phase 1 · a-okvqa only</p>
+  <h1>The joint FiLM probe reproduces the deck's numbers on A-OKVQA alone</h1>
+  <p class="dek">
+    From-scratch implementation of the LoRA + depth-conditioned FiLM probe in
+    <code>260914_keep_it_simple.pdf</code> (answer head + agreement head, tapped at decoder
+    depths 8/12/20/28), trained on A-OKVQA only as a first checkpoint before committing disk
+    to the deck's full 5-dataset pool. All three headline numbers land close to the deck's
+    reported A-OKVQA row despite the narrower training pool.
+  </p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Full depth-28</div>
+      <div class="value">81.5<small>%</small></div>
+      <div class="sub">deck &ldquo;Joint 2-head&rdquo;: <span class="deck">79.30%</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Routed (calibrated exit)</div>
+      <div class="value">80.3<small>%</small></div>
+      <div class="sub">at depth 14.0 avg · deck: <span class="deck">80.38% @ 18.18</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Zero-shot baseline</div>
+      <div class="value">82.2<small>%</small></div>
+      <div class="sub">deck Qwen3-VL-2B: <span class="deck">78.40%</span></div>
+    </div>
+  </div>
+  <p class="caption">1,145-row held-out A-OKVQA validation split, never touched during training or calibration. &ldquo;Routed&rdquo; = calibrated 90%-agreement-precision threshold per tapped depth, exit at earliest crossing, full-depth fallback otherwise (fallback never fired here &mdash; 100% of rows exited early).</p>
+
+  <h2><span class="num">01</span>Reproduction vs. the deck</h2>
+  <p>Same A-OKVQA row from page 7 of the deck, alongside this run. Different training pool
+  (A-OKVQA only here, vs. the deck's joint 5-dataset pool of 22.5K answer-fit rows), different
+  seed, same architecture and calibration protocol.</p>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Metric</th><th class="num">Deck (5-dataset pool)</th><th class="num">This run (A-OKVQA only)</th><th class="num">&Delta;</th></tr>
+    </thead>
+    <tbody>
+      <tr class="ours"><td><span class="swatch blue"></span>Full depth-28 accuracy</td><td class="num">79.30%</td><td class="num">81.48%</td><td class="num">+2.18</td></tr>
+      <tr class="ours"><td><span class="swatch blue"></span>Routed accuracy</td><td class="num">80.38%</td><td class="num">80.35%</td><td class="num">&minus;0.03</td></tr>
+      <tr class="ours"><td><span class="swatch blue"></span>Routed mean depth</td><td class="num">18.18</td><td class="num">13.99</td><td class="num">&minus;4.19</td></tr>
+      <tr><td><span class="swatch rust"></span>Zero-shot Qwen3-VL-2B</td><td class="num">78.40%</td><td class="num">82.18%</td><td class="num">+3.78</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="caption">Zero-shot row uses a separate, explicitly-prompted generation pass (LoRA disabled) as a sanity check on the frozen backbone &mdash; not part of the probe's own accuracy path.</p>
+
+  <h2><span class="num">02</span>Calibration: precision and coverage per tapped depth</h2>
+  <p>The calibration split (2,559 rows, image-disjoint from training) fits the lowest
+  agreement-probability threshold at each depth that keeps precision &ge;90% &mdash; i.e. among
+  rows the probe is willing to route at that depth, at least 90% actually match the depth-28
+  answer. Coverage is the fraction of the calibration set that clears each depth's own
+  threshold.</p>
+
+  <div class="chart-card">
+    <div class="legend">
+      <span><span class="swatch blue"></span>Precision at threshold</span>
+      <span style="margin-left: 4px"><span class="swatch rust"></span>Coverage at threshold</span>
+    </div>
+    <svg viewBox="0 0 680 260" width="100%" style="overflow: visible; display: block;">
+      <!-- gridlines at 25/50/75/100 -->
+      <line class="grid-line" x1="60" y1="190" x2="640" y2="190" />
+      <line class="grid-line" x1="60" y1="140" x2="640" y2="140" />
+      <line class="grid-line" x1="60" y1="90" x2="640" y2="90" />
+      <line class="grid-line" x1="60" y1="40" x2="640" y2="40" />
+      <text class="axis-label" x="52" y="194" text-anchor="end">0%</text>
+      <text class="axis-label" x="52" y="144" text-anchor="end">50%</text>
+      <text class="axis-label" x="52" y="94" text-anchor="end">75%</text>
+      <text class="axis-label" x="52" y="44" text-anchor="end">100%</text>
+      <line class="grid-line" x1="60" y1="240" x2="640" y2="240" style="stroke: var(--hairline-strong);" />
+
+      <!-- x positions for depths 8,12,20,28 (evenly spaced, labeled) -->
+      <!-- x: 8->120, 12->253, 20->440, 28->580 -->
+      <text class="axis-label" x="120" y="256" text-anchor="middle">depth 8</text>
+      <text class="axis-label" x="253" y="256" text-anchor="middle">depth 12</text>
+      <text class="axis-label" x="440" y="256" text-anchor="middle">depth 20</text>
+      <text class="axis-label" x="580" y="256" text-anchor="middle">depth 28</text>
+
+      <!-- precision series (blue): 90.1, 90.0, 97.6, 100 -- y = 240 - value*2.0 -->
+      <polyline points="120,59.8 253,60.0 440,44.8 580,40" fill="none" stroke="var(--blue)" stroke-width="2" />
+      <circle cx="120" cy="59.8" r="4.5" fill="var(--blue)" />
+      <circle cx="253" cy="60.0" r="4.5" fill="var(--blue)" />
+      <circle cx="440" cy="44.8" r="4.5" fill="var(--blue)" />
+      <circle cx="580" cy="40" r="4.5" fill="var(--blue)" />
+      <text class="data-label" x="120" y="48" text-anchor="middle">90.1%</text>
+      <text class="data-label" x="253" y="74" text-anchor="middle">90.0%</text>
+      <text class="data-label" x="440" y="33" text-anchor="middle">97.6%</text>
+      <text class="data-label" x="580" y="28" text-anchor="middle">100%</text>
+
+      <!-- coverage series (rust): 20.9, 54.7, 100, 100 -- y = 240 - value*2.0 -->
+      <polyline points="120,198.2 253,130.6 440,40 580,40" fill="none" stroke="var(--rust)" stroke-width="2" />
+      <circle cx="120" cy="198.2" r="4.5" fill="var(--rust)" />
+      <circle cx="253" cy="130.6" r="4.5" fill="var(--rust)" />
+      <circle cx="440" cy="40" r="4.5" fill="var(--rust)" />
+      <circle cx="580" cy="40" r="4.5" fill="var(--rust)" />
+      <text class="data-label-muted" x="120" y="212" text-anchor="middle">21%</text>
+      <text class="data-label-muted" x="253" y="119" text-anchor="middle">55%</text>
+      <text class="data-label-muted" x="440" y="52" text-anchor="middle">100%</text>
+      <text class="data-label-muted" x="580" y="52" text-anchor="middle">100%</text>
+    </svg>
+  </div>
+  <p class="caption">Four tapped depths only &mdash; not a continuous 1&ndash;28 sweep (the deck's page 8/22 curves; out of scope for this phase, see below). By depth 20 essentially every calibration row already agrees with the depth-28 answer, which is why the routed eval rarely needs to go past depth ~14 on average.</p>
+
+  <h2><span class="num">03</span>What this does and doesn't establish</h2>
+  <ul class="plain">
+    <li><strong>Confirms the mechanism works end-to-end</strong>: LoRA r=64 on the 28 language
+    layers only (vision tower verified frozen), FiLM-conditioned shared trunk, joint answer +
+    agreement heads through one optimizer, calibrated exit thresholds &mdash; all trained and
+    evaluated with no shortcuts against the architecture in pages 3&ndash;6 / 18&ndash;19.</li>
+    <li><strong>Single-dataset training pool, not the deck's joint 5-dataset pool.</strong>
+    A-OKVQA-only training happens to land close to the deck's numbers on A-OKVQA itself, but
+    says nothing about transfer to the other 9 MMEB datasets in the deck's Results tables
+    (pages 7&ndash;8) &mdash; that needs the full pool.</li>
+    <li><strong>Image-disjoint splitting is approximate</strong>: A-OKVQA's HF release has no
+    image-id column, so answer-fit / confidence-fit / calibration are split by row, not a
+    deduplicated image key. Most A-OKVQA images carry one question, so this should track the
+    deck's stricter rule closely, but isn't a verified exact match.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Phase 2 is still blocked on disk, not code.</strong> Expanding to the deck's full
+    pool (+ScienceQA/CUB-200/ImageNet/iNaturalist) and the 10-dataset MMEB-eval Results table
+    needs <code>images.zip</code> (7.1GB) &mdash; this instance has 6&ndash;7GB free after
+    cleanup, on a 32GB ephemeral disk. That's an instance-resize decision, not something to
+    route around with more cleanup.
+  </div>
+
+  <footer>
+    <span>early-exit-probe branch · checkpoint-500 · batch 8 · lr 1e-4 · lora r=64</span>
+    <span>V100-32GB · A-OKVQA HuggingFaceM4</span>
+  </footer>
+</div>

@@ -1,0 +1,85 @@
+[calibrate] calibration rows=2559
+[calibrate] 8/2559
+[calibrate] 88/2559
+[calibrate] 168/2559
+[calibrate] 248/2559
+[calibrate] 328/2559
+[calibrate] 408/2559
+[calibrate] 488/2559
+[calibrate] 568/2559
+[calibrate] 648/2559
+[calibrate] 728/2559
+[calibrate] 808/2559
+[calibrate] 888/2559
+[calibrate] 968/2559
+[calibrate] 1048/2559
+[calibrate] 1128/2559
+[calibrate] 1208/2559
+[calibrate] 1288/2559
+[calibrate] 1368/2559
+[calibrate] 1448/2559
+[calibrate] 1528/2559
+[calibrate] 1608/2559
+[calibrate] 1688/2559
+[calibrate] 1768/2559
+[calibrate] 1848/2559
+[calibrate] 1928/2559
+[calibrate] 2008/2559
+[calibrate] 2088/2559
+[calibrate] 2168/2559
+[calibrate] 2248/2559
+[calibrate] 2328/2559
+[calibrate] 2408/2559
+[calibrate] 2488/2559
+[calibrate] depth=8 -> {'threshold': 0.9368309378623962, 'coverage': 0.20906604142243063, 'precision': 0.9009345769882202}
+[calibrate] depth=12 -> {'threshold': 0.8498976826667786, 'coverage': 0.5474794841735052, 'precision': 0.900071382522583}
+[calibrate] depth=20 -> {'threshold': 0.9762319922447205, 'coverage': 1.0, 'precision': 0.9761625528335571}
+[calibrate] depth=28 -> {'threshold': 0.9998579025268555, 'coverage': 1.0, 'precision': 1.0}
+[calibrate] wrote early_exit_probe/outputs/phase1_run1/checkpoint-500/thresholds.json
+[eval] validation rows=1145
+[eval] 8/1145
+[eval] 88/1145
+[eval] 168/1145
+[eval] 248/1145
+[eval] 328/1145
+[eval] 408/1145
+[eval] 488/1145
+[eval] 568/1145
+[eval] 648/1145
+[eval] 728/1145
+[eval] 808/1145
+[eval] 888/1145
+[eval] 968/1145
+[eval] 1048/1145
+[eval] 1128/1145
+{
+  "n": 1145,
+  "full_depth28_accuracy": 0.8148471615720524,
+  "routed_accuracy": 0.8034934497816594,
+  "routed_mean_depth": 13.991266375545852,
+  "routed_coverage_before_fallback": 1.0,
+  "zero_shot_accuracy": 0.24541484716157205,
+  "thresholds_used": {
+    "8": {
+      "threshold": 0.9368309378623962,
+      "coverage": 0.20906604142243063,
+      "precision": 0.9009345769882202
+    },
+    "12": {
+      "threshold": 0.8498976826667786,
+      "coverage": 0.5474794841735052,
+      "precision": 0.900071382522583
+    },
+    "20": {
+      "threshold": 0.9762319922447205,
+      "coverage": 1.0,
+      "precision": 0.9761625528335571
+    },
+    "28": {
+      "threshold": 0.9998579025268555,
+      "coverage": 1.0,
+      "precision": 1.0
+    }
+  }
+}
+[eval] wrote early_exit_probe/outputs/phase1_run1/checkpoint-500/eval_results.json
