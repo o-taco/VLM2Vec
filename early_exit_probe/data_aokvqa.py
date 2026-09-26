@@ -104,9 +104,16 @@ class AOKVQADataset(Dataset):
 CHOICE_LETTERS = "ABCDEFGH"
 
 
+def choice_label(i: int, n_choices: int) -> str:
+    """Letters up to 8 options (what the A-OKVQA checkpoint was trained with), numbers
+    beyond that -- classification eval sets go up to 211-way, past any letter scheme."""
+    return CHOICE_LETTERS[i] if n_choices <= len(CHOICE_LETTERS) else str(i + 1)
+
+
 def build_prompt(question: str, choices: list[str]) -> str:
+    n = len(choices)
     lines = [question]
     for i, choice in enumerate(choices):
-        lines.append(f"{CHOICE_LETTERS[i]}. {choice}")
+        lines.append(f"{choice_label(i, n)}. {choice}")
     lines.append("Answer:")
     return "\n".join(lines)

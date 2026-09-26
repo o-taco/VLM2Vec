@@ -122,14 +122,21 @@ def locate_choice_token_positions(processor, text: str, n_choices: int, final_le
     the single `<|image_pad|>` placeholder expanded into (`final_len - raw_len`) -- valid
     because every choice appears strictly after the image block in our prompt template.
     """
-    from .data_aokvqa import CHOICE_LETTERS
+    from .data_aokvqa import choice_label
 
     raw = processor.tokenizer(text, return_offsets_mapping=True)
     offsets = raw["offset_mapping"]
     shift = final_len - len(raw["input_ids"])
 
-    boundaries_char = [text.index(f"\n{CHOICE_LETTERS[i]}.") for i in range(1, n_choices)]
-    boundaries_char.append(text.index("\nAnswer"))
+    # Each choice ends where the next label's line starts. Search forward from the previous
+    # boundary so a "\n3." inside earlier choice text (or a 2-digit label like "\n10.")
+    # can't be picked up out of order.
+    cursor = text.index(f"\n{choice_label(0, n_choices)}.")
+    boundaries_char = []
+    for i in range(1, n_choices):
+        cursor = text.index(f"\n{choice_label(i, n_choices)}.", cursor + 1)
+        boundaries_char.append(cursor)
+    boundaries_char.append(text.index("\nAnswer", cursor + 1))
 
     positions = []
     for boundary in boundaries_char:

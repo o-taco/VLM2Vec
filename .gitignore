@@ -123,4 +123,5 @@ archive/
 # early_exit_probe: keep source + small result/threshold/split-index JSON, drop large checkpoints
 early_exit_probe/outputs/**/checkpoint-*/*
 !early_exit_probe/outputs/**/checkpoint-*/eval_results.json
+!early_exit_probe/outputs/**/checkpoint-*/eval_mmeb_results.json
 !early_exit_probe/outputs/**/checkpoint-*/thresholds.json

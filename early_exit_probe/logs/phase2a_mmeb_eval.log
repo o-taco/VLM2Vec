@@ -1,0 +1,190 @@
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[N24News] 8/1000
+[N24News] 208/1000
+[N24News] 408/1000
+[N24News] 608/1000
+[N24News] 808/1000
+{
+  "N24News": {
+    "n": 1000,
+    "n_choices": 24,
+    "chance": 0.041666666666666664,
+    "zero_shot_accuracy": 0.556,
+    "per_depth_accuracy": {
+      "8": 0.387,
+      "12": 0.501,
+      "20": 0.543,
+      "28": 0.549
+    },
+    "full_depth28_accuracy": 0.549,
+    "routed_accuracy": 0.491,
+    "routed_mean_depth": 11.436,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[HatefulMemes] 8/1000
+[HatefulMemes] 208/1000
+[HatefulMemes] 408/1000
+[HatefulMemes] 608/1000
+[HatefulMemes] 808/1000
+{
+  "HatefulMemes": {
+    "n": 1000,
+    "n_choices": 2,
+    "chance": 0.5,
+    "zero_shot_accuracy": 0.6,
+    "per_depth_accuracy": {
+      "8": 0.509,
+      "12": 0.491,
+      "20": 0.601,
+      "28": 0.596
+    },
+    "full_depth28_accuracy": 0.596,
+    "routed_accuracy": 0.601,
+    "routed_mean_depth": 20.0,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[VOC2007] 8/1000
+[VOC2007] 208/1000
+[VOC2007] 408/1000
+[VOC2007] 608/1000
+[VOC2007] 808/1000
+{
+  "VOC2007": {
+    "n": 1000,
+    "n_choices": 20,
+    "chance": 0.05,
+    "zero_shot_accuracy": 0.851,
+    "per_depth_accuracy": {
+      "8": 0.8,
+      "12": 0.788,
+      "20": 0.835,
+      "28": 0.854
+    },
+    "full_depth28_accuracy": 0.854,
+    "routed_accuracy": 0.793,
+    "routed_mean_depth": 9.444,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[ImageNet-A] 4/1000
+[ImageNet-A] 104/1000
+[ImageNet-A] 204/1000
+[ImageNet-A] 304/1000
+[ImageNet-A] 404/1000
+[ImageNet-A] 504/1000
+[ImageNet-A] 604/1000
+[ImageNet-A] 704/1000
+[ImageNet-A] 804/1000
+[ImageNet-A] 904/1000
+{
+  "ImageNet-A": {
+    "n": 1000,
+    "n_choices": 200,
+    "chance": 0.005,
+    "zero_shot_accuracy": 0.403,
+    "per_depth_accuracy": {
+      "8": 0.49,
+      "12": 0.705,
+      "20": 0.714,
+      "28": 0.697
+    },
+    "full_depth28_accuracy": 0.697,
+    "routed_accuracy": 0.703,
+    "routed_mean_depth": 11.548,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": true
+  }
+}
+[ImageNet-R] 4/1000
+[ImageNet-R] 104/1000
+[ImageNet-R] 204/1000
+[ImageNet-R] 304/1000
+[ImageNet-R] 404/1000
+[ImageNet-R] 504/1000
+[ImageNet-R] 604/1000
+[ImageNet-R] 704/1000
+[ImageNet-R] 804/1000
+[ImageNet-R] 904/1000
+{
+  "ImageNet-R": {
+    "n": 1000,
+    "n_choices": 200,
+    "chance": 0.005,
+    "zero_shot_accuracy": 0.409,
+    "per_depth_accuracy": {
+      "8": 0.696,
+      "12": 0.731,
+      "20": 0.84,
+      "28": 0.852
+    },
+    "full_depth28_accuracy": 0.852,
+    "routed_accuracy": 0.732,
+    "routed_mean_depth": 11.224,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[ObjectNet] 4/1000
+[ObjectNet] 104/1000
+[ObjectNet] 204/1000
+[ObjectNet] 304/1000
+[ObjectNet] 404/1000
+[ObjectNet] 504/1000
+[ObjectNet] 604/1000
+[ObjectNet] 704/1000
+[ObjectNet] 804/1000
+[ObjectNet] 904/1000
+{
+  "ObjectNet": {
+    "n": 1000,
+    "n_choices": 113,
+    "chance": 0.008849557522123894,
+    "zero_shot_accuracy": 0.375,
+    "per_depth_accuracy": {
+      "8": 0.664,
+      "12": 0.676,
+      "20": 0.741,
+      "28": 0.728
+    },
+    "full_depth28_accuracy": 0.728,
+    "routed_accuracy": 0.7,
+    "routed_mean_depth": 11.852,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[Country211] 4/1000
+[Country211] 104/1000
+[Country211] 204/1000
+[Country211] 304/1000
+[Country211] 404/1000
+[Country211] 504/1000
+[Country211] 604/1000
+[Country211] 704/1000
+[Country211] 804/1000
+[Country211] 904/1000
+{
+  "Country211": {
+    "n": 1000,
+    "n_choices": 211,
+    "chance": 0.004739336492890996,
+    "zero_shot_accuracy": 0.074,
+    "per_depth_accuracy": {
+      "8": 0.059,
+      "12": 0.11,
+      "20": 0.138,
+      "28": 0.139
+    },
+    "full_depth28_accuracy": 0.139,
+    "routed_accuracy": 0.122,
+    "routed_mean_depth": 13.388,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[eval_mmeb] wrote early_exit_probe/outputs/phase1_run1/checkpoint-500/eval_mmeb_results.json
