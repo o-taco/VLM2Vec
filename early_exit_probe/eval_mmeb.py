@@ -19,7 +19,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from early_exit_probe.data_mmeb_eval import DATASETS, MMEBClassificationDataset
+from early_exit_probe.data_mmeb_eval import ALL_DATASETS, MMEBClassificationDataset
 from early_exit_probe.model import DEPTH_TAPS, DepthProbe, load_backbone, load_processor
 from early_exit_probe.inference import load_checkpoint, run_batch_all_depths
 from early_exit_probe.batching import collate_for_generation
@@ -58,10 +58,15 @@ def eval_dataset(name, backbone, probe, processor, thresholds, device, limit, ba
     ds = MMEBClassificationDataset(name, limit=limit)
     n, n_choices = len(ds), ds.n_choices
     bs = batch_size or default_batch_size(n_choices)
+    # a batch must share one option count (ScienceQA is 2-5-way), so batch within count groups
+    groups = {}
+    for i, c in enumerate(ds.choice_counts):
+        groups.setdefault(c, []).append(i)
+    batches = [idxs[s:s + bs] for _, idxs in sorted(groups.items()) for s in range(0, len(idxs), bs)]
     per_depth_correct = {d: 0 for d in DEPTH_TAPS}
     routed_correct, routed_depths, fallbacks, zs_correct = 0, [], 0, 0
-    for start in range(0, n, bs):
-        examples = [ds[i] for i in range(start, min(start + bs, n))]
+    for b, batch_idx in enumerate(batches):
+        examples = [ds[i] for i in batch_idx]
         per_depth, correct_idx = run_batch_all_depths(backbone, probe, processor, examples, device)
         for d in DEPTH_TAPS:
             per_depth_correct[d] += per_depth[d]["correct"].sum().item()
@@ -71,12 +76,13 @@ def eval_dataset(name, backbone, probe, processor, thresholds, device, limit, ba
         fallbacks += sum(1 for d in exited if d == max(DEPTH_TAPS))
         if not skip_zero_shot:
             zs_correct += sum(zero_shot_batch(backbone, processor, examples, device))
-        if (start // bs) % 25 == 0:
-            print(f"[{name}] {start + len(examples)}/{n}", flush=True)
+        if b % 25 == 0:
+            print(f"[{name}] batch {b + 1}/{len(batches)}", flush=True)
     return {
         "n": n,
         "n_choices": n_choices,
-        "chance": 1.0 / n_choices,
+        "min_choices": min(ds.choice_counts),
+        "chance": sum(1.0 / c for c in ds.choice_counts) / n,
         "zero_shot_accuracy": None if skip_zero_shot else zs_correct / n,
         "per_depth_accuracy": {str(d): per_depth_correct[d] / n for d in DEPTH_TAPS},
         "full_depth28_accuracy": per_depth_correct[max(DEPTH_TAPS)] / n,
@@ -91,7 +97,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--thresholds", default=None)
-    ap.add_argument("--datasets", nargs="+", default=list(DATASETS))
+    ap.add_argument("--datasets", nargs="+", default=list(ALL_DATASETS))
     ap.add_argument("--limit", type=int, default=None, help="first N rows per dataset (deck uses 1,000)")
     ap.add_argument("--batch_size", type=int, default=None)
     ap.add_argument("--skip_zero_shot", action="store_true")

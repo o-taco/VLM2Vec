@@ -1,0 +1,53 @@
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[Visual7W] batch 1/125
+[Visual7W] batch 26/125
+[Visual7W] batch 51/125
+[Visual7W] batch 76/125
+[Visual7W] batch 101/125
+{
+  "Visual7W": {
+    "n": 1000,
+    "n_choices": 4,
+    "min_choices": 4,
+    "chance": 0.25,
+    "zero_shot_accuracy": 0.895,
+    "per_depth_accuracy": {
+      "8": 0.757,
+      "12": 0.815,
+      "20": 0.876,
+      "28": 0.875
+    },
+    "full_depth28_accuracy": 0.875,
+    "routed_accuracy": 0.86,
+    "routed_mean_depth": 13.42,
+    "routed_coverage_before_fallback": 0.998,
+    "approximate_candidate_set": false
+  }
+}
+[ScienceQA] batch 1/127
+[ScienceQA] batch 26/127
+[ScienceQA] batch 51/127
+[ScienceQA] batch 76/127
+[ScienceQA] batch 101/127
+[ScienceQA] batch 126/127
+{
+  "ScienceQA": {
+    "n": 1000,
+    "n_choices": 5,
+    "min_choices": 2,
+    "chance": 0.35856666666666664,
+    "zero_shot_accuracy": 0.824,
+    "per_depth_accuracy": {
+      "8": 0.531,
+      "12": 0.624,
+      "20": 0.773,
+      "28": 0.771
+    },
+    "full_depth28_accuracy": 0.771,
+    "routed_accuracy": 0.723,
+    "routed_mean_depth": 17.12,
+    "routed_coverage_before_fallback": 0.984,
+    "approximate_candidate_set": false
+  }
+}
+[eval_mmeb] wrote early_exit_probe/outputs/phase1_run1/checkpoint-500/eval_mmeb_results.json

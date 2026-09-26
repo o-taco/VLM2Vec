@@ -1,6 +1,6 @@
 """Side-by-side bars: deck (260914_keep_it_simple.pdf, page 7) vs. our reproduction on the
-MMEB classification sets. Ours is read from eval_mmeb_results.json; the deck numbers are
-transcribed from the page-7 results table.
+10 evaluation sets (7 classification + 3 VQA). Ours is read from eval_mmeb_results.json (and
+eval_results.json for A-OKVQA); the deck numbers are transcribed from the page-7 tables.
 
 Top panel: "Joint 2-head" (full depth 28). Bottom panel: "90% agreement" routed accuracy,
 with mean exit depth under each group. Ours is the A-OKVQA-only checkpoint, routed with
@@ -22,10 +22,16 @@ DECK = {
     "ImageNet-R": (87.70, 89.13, 16.32),
     "ObjectNet": (75.30, 74.25, 15.30),
     "Country211": (16.30, 17.00, 19.96),
+    "A-OKVQA": (79.30, 80.38, 18.18),
+    "Visual7W": (88.50, 92.50, 20.00),
+    "ScienceQA": (86.40, 84.75, 18.27),
 }
-DECK_AVG = (62.63, 62.80, 18.11)
-WAYS = {"N24News": 24, "HatefulMemes": 2, "VOC2007": 20, "ImageNet-A": 200,
-        "ImageNet-R": 200, "ObjectNet": 113, "Country211": 211}
+CLS = ["N24News", "HatefulMemes", "VOC2007", "ImageNet-A", "ImageNet-R", "ObjectNet", "Country211"]
+VQA = ["A-OKVQA", "Visual7W", "ScienceQA"]
+DECK_AVG = {"cls": (62.63, 62.80, 18.11), "vqa": (84.73, 85.88, 18.82)}
+WAYS = {"N24News": "24-way", "HatefulMemes": "2-way", "VOC2007": "20-way", "ImageNet-A": "200-way",
+        "ImageNet-R": "200-way", "ObjectNet": "113-way", "Country211": "211-way",
+        "A-OKVQA": "4-way", "Visual7W": "4-way", "ScienceQA": "2-5-way"}
 
 # Categorical slots 1 and 2 of the reference palette (validated: CVD dE 24.7, contrast >= 3:1)
 BLUE, ORANGE = "#2a78d6", "#eb6834"
@@ -40,18 +46,25 @@ def main():
     args = ap.parse_args()
 
     ours_raw = json.load(open(args.results))
-    names = list(DECK)
+    aokvqa = json.load(open(Path(args.results).with_name("eval_results.json")))
+    ours_raw["A-OKVQA"] = aokvqa
     ours = {n: (ours_raw[n]["full_depth28_accuracy"] * 100, ours_raw[n]["routed_accuracy"] * 100,
-                ours_raw[n]["routed_mean_depth"]) for n in names}
-    ours_avg = tuple(np.mean([ours[n][i] for n in names]) for i in range(3))
-    names_all = names + ["Average"]
-    deck_rows = [DECK[n] for n in names] + [DECK_AVG]
-    ours_rows = [ours[n] for n in names] + [ours_avg]
+                ours_raw[n]["routed_mean_depth"]) for n in DECK}
+
+    def avg(group):
+        return tuple(np.mean([ours[n][i] for n in group]) for i in range(3))
+
+    ours_cls, ours_vqa = avg(CLS), avg(VQA)
+    names_all = CLS + ["Avg. (cls)"] + VQA + ["Avg. (VQA)"]
+    deck_rows = [DECK[n] for n in CLS] + [DECK_AVG["cls"]] + [DECK[n] for n in VQA] + [DECK_AVG["vqa"]]
+    ours_rows = [ours[n] for n in CLS] + [ours_cls] + [ours[n] for n in VQA] + [ours_vqa]
+    label_rows = [(n, WAYS[n]) for n in CLS] + [("Average", "7 sets")] + [(n, WAYS[n]) for n in VQA] \
+        + [("Average", "3 sets")]
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "text.color": INK, "axes.edgecolor": GRID})
-    fig, axes = plt.subplots(2, 1, figsize=(12, 8.6), facecolor=SURFACE)
+    fig, axes = plt.subplots(2, 1, figsize=(16, 8.6), facecolor=SURFACE)
     x = np.arange(len(names_all))
-    w = 0.27
+    w = 0.3
 
     panels = [
         (0, "Full depth 28 (\"Joint 2-head\")", "Top-1 accuracy (%)"),
@@ -66,7 +79,7 @@ def main():
         for bars in (b1, b2):
             for b in bars:
                 ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 1.0, f"{b.get_height():.1f}",
-                        ha="center", va="bottom", fontsize=8.5, color=INK2)
+                        ha="center", va="bottom", fontsize=7.5, color=INK2)
         ax.set_ylim(0, 100)
         ax.set_yticks(range(0, 101, 20))
         ax.set_ylabel(ylabel, color=INK2, fontsize=10)
@@ -78,24 +91,26 @@ def main():
         ax.tick_params(axis="y", length=0, colors=INK2)
         ax.tick_params(axis="x", length=0, colors=INK)
         ax.set_xlim(-0.6, len(names_all) - 0.4)
-        # visual separator before the Average group
-        ax.axvline(len(names) - 0.5, color=GRID, linewidth=1.2, zorder=1)
+        # separators around the classification average
+        for cut in (len(CLS) - 0.5, len(CLS) + 0.5):
+            ax.axvline(cut, color=GRID, linewidth=1.2, zorder=1)
 
     axes[0].set_xticks(x)
-    axes[0].set_xticklabels([f"{n}\n{WAYS[n]}-way" for n in names] + ["Average\n(7 sets)"], fontsize=9.5)
+    axes[0].set_xticklabels([f"{n}\n{w_}" for n, w_ in label_rows], fontsize=9)
+    depth_pairs = [(DECK[n][2], ours[n][2]) for n in CLS] + [(DECK_AVG["cls"][2], ours_cls[2])] \
+        + [(DECK[n][2], ours[n][2]) for n in VQA] + [(DECK_AVG["vqa"][2], ours_vqa[2])]
     axes[1].set_xticks(x)
-    axes[1].set_xticklabels(
-        [f"{n}\ndepth {DECK[n][2]:.1f} | {ours[n][2]:.1f}" for n in names]
-        + [f"Average\ndepth {DECK_AVG[2]:.1f} | {ours_avg[2]:.1f}"], fontsize=9.5)
+    axes[1].set_xticklabels([f"{n}\ndepth {d:.1f} | {o:.1f}" for (n, _), (d, o) in zip(label_rows, depth_pairs)],
+                            fontsize=9)
     axes[1].text(1.0, -0.27, "mean exit depth: deck | ours", transform=axes[1].transAxes,
                  ha="right", va="top", fontsize=8.5, color=INK2)
 
     h, l = axes[0].get_legend_handles_labels()
     fig.legend(h, l, loc="upper left", bbox_to_anchor=(0.006, 0.935), ncol=2, frameon=False, fontsize=10.5)
-    fig.suptitle("Early Exit Probing on MMEB classification: deck vs. our reproduction",
+    fig.suptitle("Early Exit Probing on the 10 MMEB evaluation sets: deck vs. our reproduction",
                  x=0.012, y=0.985, ha="left", fontsize=14, fontweight="bold", color=INK)
-    fig.text(0.012, 0.952, "1,000 rows per dataset, native candidate sets. Ours has never seen classification data; "
-             "its routing thresholds were calibrated on A-OKVQA.", fontsize=9.5, color=INK2, ha="left")
+    fig.text(0.012, 0.952, "Native candidate sets. Ours trained on A-OKVQA only (evaluated on its 1,145-row val split); every other set is "
+             "zero-transfer, and routing thresholds were calibrated on A-OKVQA.", fontsize=9.5, color=INK2, ha="left")
     fig.tight_layout(rect=(0, 0, 1, 0.885), h_pad=3.0)
 
     for ext in ("png", "pdf"):

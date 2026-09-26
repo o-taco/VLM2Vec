@@ -117,5 +117,41 @@
     "routed_mean_depth": 13.388,
     "routed_coverage_before_fallback": 1.0,
     "approximate_candidate_set": false
+  },
+  "Visual7W": {
+    "n": 1000,
+    "n_choices": 4,
+    "min_choices": 4,
+    "chance": 0.25,
+    "zero_shot_accuracy": 0.895,
+    "per_depth_accuracy": {
+      "8": 0.757,
+      "12": 0.815,
+      "20": 0.876,
+      "28": 0.875
+    },
+    "full_depth28_accuracy": 0.875,
+    "routed_accuracy": 0.86,
+    "routed_mean_depth": 13.42,
+    "routed_coverage_before_fallback": 0.998,
+    "approximate_candidate_set": false
+  },
+  "ScienceQA": {
+    "n": 1000,
+    "n_choices": 5,
+    "min_choices": 2,
+    "chance": 0.35856666666666664,
+    "zero_shot_accuracy": 0.824,
+    "per_depth_accuracy": {
+      "8": 0.531,
+      "12": 0.624,
+      "20": 0.773,
+      "28": 0.771
+    },
+    "full_depth28_accuracy": 0.771,
+    "routed_accuracy": 0.723,
+    "routed_mean_depth": 17.12,
+    "routed_coverage_before_fallback": 0.984,
+    "approximate_candidate_set": false
   }
 }
