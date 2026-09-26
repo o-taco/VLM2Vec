@@ -14,7 +14,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from early_exit_probe.data_aokvqa import AOKVQADataset, load_or_build_split_index
+from early_exit_probe.data_pool import TrainingPool
 from early_exit_probe.model import DEPTH_TAPS, DepthProbe, load_backbone, load_processor
 from early_exit_probe.inference import run_batch_all_depths, load_checkpoint
 
@@ -45,6 +45,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", type=str, required=True)
     ap.add_argument("--target", type=float, default=0.90)
+    ap.add_argument("--pool", default="aokvqa", choices=["aokvqa", "aokvqa+scienceqa"],
+                    help="sources whose calibration splits are pooled into one threshold fit")
     ap.add_argument("--batch_size", type=int, default=8)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--cache_dir", type=str, default=None)
@@ -59,20 +61,20 @@ def main():
     load_checkpoint(backbone, probe, args.checkpoint)
     probe.eval()
 
-    split_index = load_or_build_split_index(SPLIT_INDEX_PATH, cache_dir=args.cache_dir)
-    calib_ds = AOKVQADataset("train", "calibration", split_index, cache_dir=args.cache_dir, limit=args.limit)
-    print(f"[calibrate] calibration rows={len(calib_ds)}", flush=True)
+    pool = TrainingPool(args.pool, SPLIT_INDEX_PATH, cache_dir=args.cache_dir)
+    print(f"[calibrate] pool={args.pool}\n{pool.describe()}", flush=True)
 
     probs_by_depth = {d: [] for d in DEPTH_TAPS}
     agrees_by_depth = {d: [] for d in DEPTH_TAPS}
-    for start in range(0, len(calib_ds), args.batch_size):
-        examples = [calib_ds[i] for i in range(start, min(start + args.batch_size, len(calib_ds)))]
+    seen = 0
+    for b, (source, examples) in enumerate(pool.calibration_batches(args.batch_size, limit=args.limit)):
         per_depth, _ = run_batch_all_depths(backbone, probe, processor, examples, device)
         for d in DEPTH_TAPS:
             probs_by_depth[d].append(per_depth[d]["agreement_prob"].cpu())
             agrees_by_depth[d].append(per_depth[d]["agrees_with_28"].cpu())
-        if (start // args.batch_size) % 10 == 0:
-            print(f"[calibrate] {start + len(examples)}/{len(calib_ds)}", flush=True)
+        seen += len(examples)
+        if b % 20 == 0:
+            print(f"[calibrate] batch {b} ({source}) rows so far={seen}", flush=True)
 
     thresholds = {}
     for d in DEPTH_TAPS:
@@ -83,7 +85,8 @@ def main():
 
     out_path = Path(args.output) if args.output else Path(args.checkpoint) / "thresholds.json"
     with open(out_path, "w") as f:
-        json.dump({"target": args.target, "thresholds": thresholds}, f, indent=2)
+        json.dump({"target": args.target, "pool": args.pool, "n_calibration_rows": seen,
+                   "thresholds": thresholds}, f, indent=2)
     print(f"[calibrate] wrote {out_path}", flush=True)
 
 

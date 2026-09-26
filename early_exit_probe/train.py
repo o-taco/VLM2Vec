@@ -1,5 +1,5 @@
 """Joint training of the LoRA-adapted backbone + depth-conditioned FiLM probe
-(answer head + agreement head) on A-OKVQA's answer-fit / confidence-fit splits.
+(answer head + agreement head) on the answer-fit / confidence-fit splits of the chosen pool (A-OKVQA, optionally + ScienceQA).
 
 Usage:
   python -m early_exit_probe.train --smoke_test
@@ -18,17 +18,12 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from early_exit_probe.data_aokvqa import AOKVQADataset, load_or_build_split_index
+from early_exit_probe.data_pool import TrainingPool
 from early_exit_probe.model import DEPTH_TAPS, DepthProbe, load_backbone, load_processor
 from early_exit_probe.batching import collate, extract_depth_concats
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SPLIT_INDEX_PATH = REPO_ROOT / "early_exit_probe" / "outputs" / "aokvqa_split_index.json"
-
-
-def sample_batch(dataset, rng, k):
-    idxs = rng.sample(range(len(dataset)), k)
-    return [dataset[i] for i in idxs]
 
 
 def run_step(backbone, probe, processor, device, answer_examples, confidence_examples, agreement_weight):
@@ -80,6 +75,8 @@ def main():
     ap.add_argument("--lora_r", type=int, default=64)
     ap.add_argument("--lora_alpha", type=int, default=128)
     ap.add_argument("--agreement_weight", type=float, default=1.0)
+    ap.add_argument("--pool", default="aokvqa", choices=["aokvqa", "aokvqa+scienceqa"],
+                    help="training sources; each step draws from one (source, n_choices) group")
     ap.add_argument("--seed", type=int, default=26091622)
     ap.add_argument("--log_every", type=int, default=10)
     ap.add_argument("--save_every", type=int, default=200)
@@ -107,11 +104,9 @@ def main():
     probe = DepthProbe().to(device)
     probe.train()
 
-    split_index = load_or_build_split_index(SPLIT_INDEX_PATH, cache_dir=args.cache_dir)
     limit = 40 if args.smoke_test else None
-    answer_ds = AOKVQADataset("train", "answer_fit", split_index, cache_dir=args.cache_dir, limit=limit)
-    confidence_ds = AOKVQADataset("train", "confidence_fit", split_index, cache_dir=args.cache_dir, limit=limit)
-    print(f"[train] answer_fit rows={len(answer_ds)} confidence_fit rows={len(confidence_ds)}", flush=True)
+    pool = TrainingPool(args.pool, SPLIT_INDEX_PATH, cache_dir=args.cache_dir, limit=limit)
+    print(f"[train] pool={args.pool} rows per (source, split, n_choices):\n{pool.describe()}", flush=True)
 
     trainable = [p for p in backbone.parameters() if p.requires_grad] + list(probe.parameters())
     n_trainable = sum(p.numel() for p in trainable)
@@ -123,8 +118,7 @@ def main():
     started = time.perf_counter()
     with open(log_path, "w") as logf:
         for step in range(1, args.max_steps + 1):
-            answer_examples = sample_batch(answer_ds, rng, half)
-            confidence_examples = sample_batch(confidence_ds, rng, half)
+            answer_examples, confidence_examples = pool.sample_step(rng, half)
 
             loss, answer_loss, agreement_loss = run_step(
                 backbone, probe, processor, device, answer_examples, confidence_examples, args.agreement_weight

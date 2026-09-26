@@ -1,0 +1,27 @@
+{
+  "target": 0.9,
+  "pool": "aokvqa+scienceqa",
+  "n_calibration_rows": 3515,
+  "thresholds": {
+    "8": {
+      "threshold": 0.8519424796104431,
+      "coverage": 0.2793741109530583,
+      "precision": 0.9002036452293396
+    },
+    "12": {
+      "threshold": 0.8138606548309326,
+      "coverage": 0.5786628733997156,
+      "precision": 0.9001966714859009
+    },
+    "20": {
+      "threshold": 0.937442421913147,
+      "coverage": 1.0,
+      "precision": 0.9857752323150635
+    },
+    "28": {
+      "threshold": 0.9998906850814819,
+      "coverage": 1.0,
+      "precision": 1.0
+    }
+  }
+}

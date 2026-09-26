@@ -1,0 +1,164 @@
+{
+  "N24News": {
+    "n": 1000,
+    "n_choices": 24,
+    "min_choices": 24,
+    "chance": 0.041666666666666664,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.273,
+      "12": 0.421,
+      "20": 0.551,
+      "28": 0.549
+    },
+    "full_depth28_accuracy": 0.549,
+    "routed_accuracy": 0.492,
+    "routed_mean_depth": 13.356,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  },
+  "HatefulMemes": {
+    "n": 1000,
+    "n_choices": 2,
+    "min_choices": 2,
+    "chance": 0.5,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.51,
+      "12": 0.509,
+      "20": 0.579,
+      "28": 0.576
+    },
+    "full_depth28_accuracy": 0.576,
+    "routed_accuracy": 0.579,
+    "routed_mean_depth": 20.0,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  },
+  "VOC2007": {
+    "n": 1000,
+    "n_choices": 20,
+    "min_choices": 20,
+    "chance": 0.05,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.767,
+      "12": 0.79,
+      "20": 0.766,
+      "28": 0.763
+    },
+    "full_depth28_accuracy": 0.763,
+    "routed_accuracy": 0.776,
+    "routed_mean_depth": 9.024,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  },
+  "ImageNet-A": {
+    "n": 1000,
+    "n_choices": 200,
+    "min_choices": 200,
+    "chance": 0.005,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.463,
+      "12": 0.732,
+      "20": 0.78,
+      "28": 0.767
+    },
+    "full_depth28_accuracy": 0.767,
+    "routed_accuracy": 0.701,
+    "routed_mean_depth": 10.684,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": true
+  },
+  "ImageNet-R": {
+    "n": 1000,
+    "n_choices": 200,
+    "min_choices": 200,
+    "chance": 0.005,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.736,
+      "12": 0.781,
+      "20": 0.864,
+      "28": 0.858
+    },
+    "full_depth28_accuracy": 0.858,
+    "routed_accuracy": 0.765,
+    "routed_mean_depth": 9.452,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  },
+  "ObjectNet": {
+    "n": 1000,
+    "n_choices": 113,
+    "min_choices": 113,
+    "chance": 0.008849557522123894,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.649,
+      "12": 0.64,
+      "20": 0.746,
+      "28": 0.742
+    },
+    "full_depth28_accuracy": 0.742,
+    "routed_accuracy": 0.663,
+    "routed_mean_depth": 8.668,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  },
+  "Country211": {
+    "n": 1000,
+    "n_choices": 211,
+    "min_choices": 211,
+    "chance": 0.004739336492890996,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.039,
+      "12": 0.075,
+      "20": 0.152,
+      "28": 0.142
+    },
+    "full_depth28_accuracy": 0.142,
+    "routed_accuracy": 0.122,
+    "routed_mean_depth": 15.644,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  },
+  "Visual7W": {
+    "n": 1000,
+    "n_choices": 4,
+    "min_choices": 4,
+    "chance": 0.25,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.776,
+      "12": 0.861,
+      "20": 0.886,
+      "28": 0.883
+    },
+    "full_depth28_accuracy": 0.883,
+    "routed_accuracy": 0.884,
+    "routed_mean_depth": 12.868,
+    "routed_coverage_before_fallback": 0.999,
+    "approximate_candidate_set": false
+  },
+  "ScienceQA": {
+    "n": 1000,
+    "n_choices": 5,
+    "min_choices": 2,
+    "chance": 0.35856666666666664,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.695,
+      "12": 0.779,
+      "20": 0.871,
+      "28": 0.872
+    },
+    "full_depth28_accuracy": 0.872,
+    "routed_accuracy": 0.84,
+    "routed_mean_depth": 13.992,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}

@@ -2,7 +2,7 @@
 10 evaluation sets (7 classification + 3 VQA). Ours is read from eval_mmeb_results.json (and
 eval_results.json for A-OKVQA); the deck numbers are transcribed from the page-7 tables.
 
-Top panel: "Joint 2-head" (full depth 28). Bottom panel: "90% agreement" routed accuracy,
+
 with mean exit depth under each group. Ours is the A-OKVQA-only checkpoint, routed with
 A-OKVQA-calibrated thresholds.
 """
@@ -33,38 +33,48 @@ WAYS = {"N24News": "24-way", "HatefulMemes": "2-way", "VOC2007": "20-way", "Imag
         "ImageNet-R": "200-way", "ObjectNet": "113-way", "Country211": "211-way",
         "A-OKVQA": "4-way", "Visual7W": "4-way", "ScienceQA": "2-5-way"}
 
-# Categorical slots 1 and 2 of the reference palette (validated: CVD dE 24.7, contrast >= 3:1)
-BLUE, ORANGE = "#2a78d6", "#eb6834"
+# Categorical slots 1-3 of the reference palette (validated all-pairs: CVD dE 9.2, normal-vision dE 24.0;
+# aqua is 2.74:1 against the surface, so every bar carries a visible value label)
+BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 SURFACE, INK, INK2, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e4e3df"
+
+ROOT = Path(__file__).resolve().parent
+RUNS = [  # (legend label, short depth-caption tag, color, checkpoint dir)
+    ("P1: ours, A-OKVQA only (500 steps)", "P1", ORANGE, ROOT / "outputs/phase1_run1/checkpoint-500"),
+    ("P3: ours, A-OKVQA + ScienceQA (1000 steps)", "P3", AQUA, ROOT / "outputs/phase3_pool_run1/checkpoint-1000"),
+]
+
+
+def load_run(ckpt: Path):
+    raw = json.load(open(ckpt / "eval_mmeb_results.json"))
+    raw["A-OKVQA"] = json.load(open(ckpt / "eval_results.json"))
+    return {n: (raw[n]["full_depth28_accuracy"] * 100, raw[n]["routed_accuracy"] * 100,
+                raw[n]["routed_mean_depth"]) for n in DECK}
 
 
 def main():
     ap = argparse.ArgumentParser()
-    root = Path(__file__).resolve().parent
-    ap.add_argument("--results", default=str(root / "outputs/phase1_run1/checkpoint-500/eval_mmeb_results.json"))
-    ap.add_argument("--out", default=str(root / "outputs/deck_vs_ours"))
+    ap.add_argument("--out", default=str(ROOT / "outputs/deck_vs_ours"))
     args = ap.parse_args()
 
-    ours_raw = json.load(open(args.results))
-    aokvqa = json.load(open(Path(args.results).with_name("eval_results.json")))
-    ours_raw["A-OKVQA"] = aokvqa
-    ours = {n: (ours_raw[n]["full_depth28_accuracy"] * 100, ours_raw[n]["routed_accuracy"] * 100,
-                ours_raw[n]["routed_mean_depth"]) for n in DECK}
+    runs = [(lab, tag, col, load_run(ck)) for lab, tag, col, ck in RUNS]
 
-    def avg(group):
-        return tuple(np.mean([ours[n][i] for n in group]) for i in range(3))
+    def avg(res, group):
+        return tuple(np.mean([res[n][i] for n in group]) for i in range(3))
 
-    ours_cls, ours_vqa = avg(CLS), avg(VQA)
     names_all = CLS + ["Avg. (cls)"] + VQA + ["Avg. (VQA)"]
     deck_rows = [DECK[n] for n in CLS] + [DECK_AVG["cls"]] + [DECK[n] for n in VQA] + [DECK_AVG["vqa"]]
-    ours_rows = [ours[n] for n in CLS] + [ours_cls] + [ours[n] for n in VQA] + [ours_vqa]
+    run_rows = [[res[n] for n in CLS] + [avg(res, CLS)] + [res[n] for n in VQA] + [avg(res, VQA)]
+                for _, _, _, res in runs]
     label_rows = [(n, WAYS[n]) for n in CLS] + [("Average", "7 sets")] + [(n, WAYS[n]) for n in VQA] \
         + [("Average", "3 sets")]
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "text.color": INK, "axes.edgecolor": GRID})
-    fig, axes = plt.subplots(2, 1, figsize=(16, 8.6), facecolor=SURFACE)
+    fig, axes = plt.subplots(2, 1, figsize=(18, 9), facecolor=SURFACE)
     x = np.arange(len(names_all))
-    w = 0.3
+    n_series = 1 + len(runs)
+    w = 0.26
+    offsets = (np.arange(n_series) - (n_series - 1) / 2) * (w + 0.01)
 
     panels = [
         (0, "Full depth 28 (\"Joint 2-head\")", "Top-1 accuracy (%)"),
@@ -72,14 +82,13 @@ def main():
     ]
     for ax, (col, title, ylabel) in zip(axes, panels):
         ax.set_facecolor(SURFACE)
-        d = [r[col] for r in deck_rows]
-        o = [r[col] for r in ours_rows]
-        b1 = ax.bar(x - w / 2 - 0.01, d, w, color=BLUE, label="Deck (5-dataset training pool)", zorder=3)
-        b2 = ax.bar(x + w / 2 + 0.01, o, w, color=ORANGE, label="Ours (A-OKVQA-only, 500 steps)", zorder=3)
-        for bars in (b1, b2):
+        series = [("Deck (5-dataset training pool)", BLUE, [r[col] for r in deck_rows])] + \
+                 [(lab, c, [r[col] for r in rows]) for (lab, _, c, _), rows in zip(runs, run_rows)]
+        for off, (lab, c, vals) in zip(offsets, series):
+            bars = ax.bar(x + off, vals, w, color=c, label=lab, zorder=3)
             for b in bars:
                 ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 1.0, f"{b.get_height():.1f}",
-                        ha="center", va="bottom", fontsize=7.5, color=INK2)
+                        ha="center", va="bottom", fontsize=6.8, color=INK2)
         ax.set_ylim(0, 100)
         ax.set_yticks(range(0, 101, 20))
         ax.set_ylabel(ylabel, color=INK2, fontsize=10)
@@ -97,20 +106,22 @@ def main():
 
     axes[0].set_xticks(x)
     axes[0].set_xticklabels([f"{n}\n{w_}" for n, w_ in label_rows], fontsize=9)
-    depth_pairs = [(DECK[n][2], ours[n][2]) for n in CLS] + [(DECK_AVG["cls"][2], ours_cls[2])] \
-        + [(DECK[n][2], ours[n][2]) for n in VQA] + [(DECK_AVG["vqa"][2], ours_vqa[2])]
+    depth_cols = [[DECK[n][2] for n in CLS] + [DECK_AVG["cls"][2]] + [DECK[n][2] for n in VQA] + [DECK_AVG["vqa"][2]]] \
+        + [[r[2] for r in rows] for rows in run_rows]
     axes[1].set_xticks(x)
-    axes[1].set_xticklabels([f"{n}\ndepth {d:.1f} | {o:.1f}" for (n, _), (d, o) in zip(label_rows, depth_pairs)],
-                            fontsize=9)
-    axes[1].text(1.0, -0.27, "mean exit depth: deck | ours", transform=axes[1].transAxes,
+    axes[1].set_xticklabels(
+        [f"{n}\n" + " | ".join(f"{col[i]:.1f}" for col in depth_cols) for i, (n, _) in enumerate(label_rows)],
+        fontsize=9)
+    axes[1].text(1.0, -0.27, "mean exit depth: deck | " + " | ".join(t for _, t, _, _ in runs), transform=axes[1].transAxes,
                  ha="right", va="top", fontsize=8.5, color=INK2)
 
     h, l = axes[0].get_legend_handles_labels()
-    fig.legend(h, l, loc="upper left", bbox_to_anchor=(0.006, 0.935), ncol=2, frameon=False, fontsize=10.5)
+    fig.legend(h, l, loc="upper left", bbox_to_anchor=(0.006, 0.935), ncol=3, frameon=False, fontsize=10.5)
     fig.suptitle("Early Exit Probing on the 10 MMEB evaluation sets: deck vs. our reproduction",
                  x=0.012, y=0.985, ha="left", fontsize=14, fontweight="bold", color=INK)
-    fig.text(0.012, 0.952, "Native candidate sets. Ours trained on A-OKVQA only (evaluated on its 1,145-row val split); every other set is "
-             "zero-transfer, and routing thresholds were calibrated on A-OKVQA.", fontsize=9.5, color=INK2, ha="left")
+    fig.text(0.012, 0.952, "Native candidate sets. Ours never trains on classification data; thresholds are calibrated on held-out "
+             "rows of each run's own training pool. A-OKVQA is scored on its 1,145-row val split.",
+             fontsize=9.5, color=INK2, ha="left")
     fig.tight_layout(rect=(0, 0, 1, 0.885), h_pad=3.0)
 
     for ext in ("png", "pdf"):

@@ -1,0 +1,439 @@
+[32mActivated conda/uv virtual environment at [36m/venv/main[0m
+[train] loading processor + backbone (device=cuda, lora_r=64)
+[train] pool=aokvqa+scienceqa rows per (source, split, n_choices):
+A-OKVQA: {'answer_fit': {4: 11939}, 'confidence_fit': {4: 2558}, 'calibration': {4: 2559}}
+ScienceQA: {'answer_fit': {2: 1468, 3: 1261, 4: 1528, 5: 75}, 'confidence_fit': {2: 316, 3: 262, 4: 337, 5: 15}, 'calibration': {2: 287, 3: 293, 4: 356, 5: 20}}
+[train] trainable params: 28,330,882
+[train] step 1/1000 loss=2.0858 answer=1.3929 agreement=0.6930 (4.7s)
+[train] step 10/1000 loss=1.8637 answer=1.3574 agreement=0.5064 (32.7s)
+[train] step 20/1000 loss=1.7282 answer=1.2262 agreement=0.5020 (60.1s)
+[train] step 30/1000 loss=1.1566 answer=0.7955 agreement=0.3610 (85.4s)
+[train] step 40/1000 loss=1.6861 answer=1.3446 agreement=0.3415 (112.1s)
+[train] step 50/1000 loss=1.0740 answer=0.8058 agreement=0.2681 (142.2s)
+[train] step 60/1000 loss=1.4052 answer=1.0777 agreement=0.3276 (175.5s)
+[train] step 70/1000 loss=1.4093 answer=1.0153 agreement=0.3939 (207.1s)
+[train] step 80/1000 loss=1.8746 answer=1.2889 agreement=0.5857 (237.3s)
+[train] step 90/1000 loss=1.0638 answer=0.8433 agreement=0.2205 (270.2s)
+[train] step 100/1000 loss=1.1090 answer=0.8741 agreement=0.2348 (300.4s)
+[train] step 110/1000 loss=0.5948 answer=0.3045 agreement=0.2903 (330.2s)
+[train] step 120/1000 loss=0.4420 answer=0.3151 agreement=0.1269 (357.3s)
+[train] step 130/1000 loss=0.8538 answer=0.6951 agreement=0.1587 (390.0s)
+[train] step 140/1000 loss=1.0277 answer=0.3861 agreement=0.6417 (415.4s)
+[train] step 150/1000 loss=1.3768 answer=0.9935 agreement=0.3833 (443.2s)
+[train] step 160/1000 loss=1.4941 answer=1.3622 agreement=0.1319 (472.2s)
+[train] step 170/1000 loss=0.9600 answer=0.7557 agreement=0.2043 (500.7s)
+[train] step 180/1000 loss=1.5677 answer=1.2383 agreement=0.3294 (525.1s)
+[train] step 190/1000 loss=1.1686 answer=0.8418 agreement=0.3268 (553.7s)
+[train] step 200/1000 loss=0.8037 answer=0.5561 agreement=0.2476 (579.6s)
+[train] saved checkpoint at step 200 -> early_exit_probe/outputs/phase3_pool_run1/checkpoint-200
+[train] step 210/1000 loss=0.5844 answer=0.3559 agreement=0.2286 (609.7s)
+[train] step 220/1000 loss=0.6870 answer=0.4768 agreement=0.2102 (640.2s)
+[train] step 230/1000 loss=0.6250 answer=0.3014 agreement=0.3236 (661.8s)
+[train] step 240/1000 loss=1.1271 answer=0.7997 agreement=0.3274 (694.6s)
+[train] step 250/1000 loss=0.8137 answer=0.6631 agreement=0.1507 (722.3s)
+[train] step 260/1000 loss=1.0565 answer=0.6311 agreement=0.4254 (748.8s)
+[train] step 270/1000 loss=0.3762 answer=0.3141 agreement=0.0621 (779.1s)
+[train] step 280/1000 loss=1.0166 answer=0.6102 agreement=0.4065 (805.1s)
+[train] step 290/1000 loss=1.0139 answer=0.7397 agreement=0.2742 (831.2s)
+[train] step 300/1000 loss=0.4072 answer=0.0885 agreement=0.3187 (860.5s)
+[train] step 310/1000 loss=0.3443 answer=0.2717 agreement=0.0726 (886.5s)
+[train] step 320/1000 loss=1.3207 answer=1.1525 agreement=0.1682 (908.9s)
+[train] step 330/1000 loss=0.4305 answer=0.3936 agreement=0.0369 (936.3s)
+[train] step 340/1000 loss=0.6552 answer=0.3200 agreement=0.3352 (963.4s)
+[train] step 350/1000 loss=0.9580 answer=0.8359 agreement=0.1221 (994.5s)
+[train] step 360/1000 loss=0.4520 answer=0.3576 agreement=0.0944 (1022.4s)
+[train] step 370/1000 loss=0.6702 answer=0.3518 agreement=0.3183 (1050.3s)
+[train] step 380/1000 loss=0.7433 answer=0.2426 agreement=0.5007 (1077.2s)
+[train] step 390/1000 loss=1.1481 answer=0.8238 agreement=0.3243 (1109.2s)
+[train] step 400/1000 loss=0.5528 answer=0.2462 agreement=0.3066 (1141.4s)
+[train] saved checkpoint at step 400 -> early_exit_probe/outputs/phase3_pool_run1/checkpoint-400
+[train] step 410/1000 loss=0.6854 answer=0.5773 agreement=0.1081 (1173.6s)
+[train] step 420/1000 loss=1.1506 answer=0.7936 agreement=0.3570 (1200.1s)
+[train] step 430/1000 loss=0.5573 answer=0.4078 agreement=0.1495 (1230.0s)
+[train] step 440/1000 loss=0.8138 answer=0.5760 agreement=0.2378 (1253.8s)
+[train] step 450/1000 loss=0.5728 answer=0.3478 agreement=0.2250 (1287.0s)
+[train] step 460/1000 loss=0.4008 answer=0.3128 agreement=0.0880 (1313.6s)
+[train] step 470/1000 loss=0.9515 answer=0.8067 agreement=0.1448 (1341.3s)
+[train] step 480/1000 loss=0.3892 answer=0.2980 agreement=0.0911 (1368.2s)
+[train] step 490/1000 loss=1.8438 answer=1.3094 agreement=0.5344 (1398.7s)
+[train] step 500/1000 loss=0.7613 answer=0.5369 agreement=0.2244 (1428.7s)
+[train] step 510/1000 loss=1.1743 answer=1.0409 agreement=0.1335 (1460.4s)
+[train] step 520/1000 loss=0.4430 answer=0.3331 agreement=0.1099 (1484.2s)
+[train] step 530/1000 loss=1.0882 answer=0.8573 agreement=0.2309 (1509.0s)
+[train] step 540/1000 loss=2.4550 answer=2.1086 agreement=0.3464 (1529.4s)
+[train] step 550/1000 loss=0.9719 answer=0.6517 agreement=0.3202 (1556.4s)
+[train] step 560/1000 loss=0.9163 answer=0.7446 agreement=0.1717 (1586.8s)
+[train] step 570/1000 loss=0.6631 answer=0.4772 agreement=0.1859 (1611.2s)
+[train] step 580/1000 loss=0.6700 answer=0.3047 agreement=0.3653 (1636.3s)
+[train] step 590/1000 loss=0.5187 answer=0.1835 agreement=0.3352 (1662.0s)
+[train] step 600/1000 loss=0.5779 answer=0.2062 agreement=0.3717 (1689.5s)
+[train] saved checkpoint at step 600 -> early_exit_probe/outputs/phase3_pool_run1/checkpoint-600
+[train] step 610/1000 loss=0.9158 answer=0.7395 agreement=0.1762 (1717.4s)
+[train] step 620/1000 loss=1.1234 answer=0.8079 agreement=0.3155 (1745.7s)
+[train] step 630/1000 loss=0.2557 answer=0.1582 agreement=0.0975 (1772.5s)
+[train] step 640/1000 loss=1.1359 answer=0.6934 agreement=0.4425 (1802.2s)
+[train] step 650/1000 loss=0.5785 answer=0.3990 agreement=0.1795 (1830.2s)
+[train] step 660/1000 loss=1.0600 answer=0.8761 agreement=0.1839 (1859.4s)
+[train] step 670/1000 loss=1.5933 answer=1.3055 agreement=0.2878 (1885.5s)
+[train] step 680/1000 loss=0.7352 answer=0.4899 agreement=0.2453 (1915.3s)
+[train] step 690/1000 loss=0.8056 answer=0.4016 agreement=0.4041 (1943.5s)
+[train] step 700/1000 loss=0.7169 answer=0.5801 agreement=0.1368 (1974.1s)
+[train] step 710/1000 loss=0.7515 answer=0.5015 agreement=0.2500 (2006.6s)
+[train] step 720/1000 loss=0.8177 answer=0.4331 agreement=0.3845 (2035.7s)
+[train] step 730/1000 loss=0.3895 answer=0.1288 agreement=0.2607 (2061.7s)
+[train] step 740/1000 loss=0.4283 answer=0.3398 agreement=0.0885 (2094.8s)
+[train] step 750/1000 loss=0.3219 answer=0.2565 agreement=0.0654 (2126.4s)
+[train] step 760/1000 loss=0.7666 answer=0.2009 agreement=0.5657 (2156.3s)
+[train] step 770/1000 loss=1.3812 answer=1.2249 agreement=0.1563 (2185.0s)
+[train] step 780/1000 loss=1.2351 answer=0.3694 agreement=0.8657 (2208.1s)
+[train] step 790/1000 loss=0.4694 answer=0.2687 agreement=0.2006 (2237.4s)
+[train] step 800/1000 loss=1.4900 answer=1.3405 agreement=0.1495 (2265.8s)
+[train] saved checkpoint at step 800 -> early_exit_probe/outputs/phase3_pool_run1/checkpoint-800
+[train] step 810/1000 loss=0.3341 answer=0.1783 agreement=0.1558 (2288.9s)
+[train] step 820/1000 loss=1.0521 answer=0.7275 agreement=0.3246 (2321.1s)
+[train] step 830/1000 loss=0.6913 answer=0.4543 agreement=0.2370 (2354.0s)
+[train] step 840/1000 loss=0.8685 answer=0.4399 agreement=0.4287 (2378.6s)
+[train] step 850/1000 loss=0.0481 answer=0.0179 agreement=0.0302 (2404.4s)
+[train] step 860/1000 loss=0.7106 answer=0.3526 agreement=0.3580 (2431.0s)
+[train] step 870/1000 loss=0.3128 answer=0.2360 agreement=0.0769 (2458.9s)
+[train] step 880/1000 loss=1.2086 answer=0.8957 agreement=0.3130 (2487.6s)
+[train] step 890/1000 loss=0.4593 answer=0.3742 agreement=0.0851 (2517.6s)
+[train] step 900/1000 loss=0.3779 answer=0.1888 agreement=0.1891 (2549.1s)
+[train] step 910/1000 loss=1.1606 answer=0.7939 agreement=0.3667 (2579.5s)
+[train] step 920/1000 loss=1.2434 answer=0.8598 agreement=0.3835 (2607.7s)
+[train] step 930/1000 loss=0.2716 answer=0.2559 agreement=0.0157 (2633.5s)
+[train] step 940/1000 loss=1.0229 answer=0.7493 agreement=0.2735 (2662.4s)
+[train] step 950/1000 loss=0.6742 answer=0.3252 agreement=0.3490 (2690.9s)
+[train] step 960/1000 loss=0.3958 answer=0.1272 agreement=0.2686 (2719.2s)
+[train] step 970/1000 loss=0.4875 answer=0.0551 agreement=0.4325 (2745.5s)
+[train] step 980/1000 loss=1.1395 answer=1.0540 agreement=0.0855 (2773.6s)
+[train] step 990/1000 loss=0.8507 answer=0.6043 agreement=0.2464 (2804.8s)
+[train] step 1000/1000 loss=0.6139 answer=0.1065 agreement=0.5074 (2833.0s)
+[train] saved checkpoint at step 1000 -> early_exit_probe/outputs/phase3_pool_run1/checkpoint-1000
+[train] done. checkpoints in early_exit_probe/outputs/phase3_pool_run1
+[calibrate] pool=aokvqa+scienceqa
+A-OKVQA: {'answer_fit': {4: 11939}, 'confidence_fit': {4: 2558}, 'calibration': {4: 2559}}
+ScienceQA: {'answer_fit': {2: 1468, 3: 1261, 4: 1528, 5: 75}, 'confidence_fit': {2: 316, 3: 262, 4: 337, 5: 15}, 'calibration': {2: 287, 3: 293, 4: 356, 5: 20}}
+[calibrate] batch 0 (A-OKVQA) rows so far=8
+[calibrate] batch 20 (A-OKVQA) rows so far=168
+[calibrate] batch 40 (A-OKVQA) rows so far=328
+[calibrate] batch 60 (A-OKVQA) rows so far=488
+[calibrate] batch 80 (A-OKVQA) rows so far=648
+[calibrate] batch 100 (A-OKVQA) rows so far=808
+[calibrate] batch 120 (A-OKVQA) rows so far=968
+[calibrate] batch 140 (A-OKVQA) rows so far=1128
+[calibrate] batch 160 (A-OKVQA) rows so far=1288
+[calibrate] batch 180 (A-OKVQA) rows so far=1448
+[calibrate] batch 200 (A-OKVQA) rows so far=1608
+[calibrate] batch 220 (A-OKVQA) rows so far=1768
+[calibrate] batch 240 (A-OKVQA) rows so far=1928
+[calibrate] batch 260 (A-OKVQA) rows so far=2088
+[calibrate] batch 280 (A-OKVQA) rows so far=2248
+[calibrate] batch 300 (A-OKVQA) rows so far=2408
+[calibrate] batch 320 (ScienceQA) rows so far=2567
+[calibrate] batch 340 (ScienceQA) rows so far=2727
+[calibrate] batch 360 (ScienceQA) rows so far=2886
+[calibrate] batch 380 (ScienceQA) rows so far=3046
+[calibrate] batch 400 (ScienceQA) rows so far=3203
+[calibrate] batch 420 (ScienceQA) rows so far=3363
+[calibrate] batch 440 (ScienceQA) rows so far=3515
+[calibrate] depth=8 -> {'threshold': 0.8519424796104431, 'coverage': 0.2793741109530583, 'precision': 0.9002036452293396}
+[calibrate] depth=12 -> {'threshold': 0.8138606548309326, 'coverage': 0.5786628733997156, 'precision': 0.9001966714859009}
+[calibrate] depth=20 -> {'threshold': 0.937442421913147, 'coverage': 1.0, 'precision': 0.9857752323150635}
+[calibrate] depth=28 -> {'threshold': 0.9998906850814819, 'coverage': 1.0, 'precision': 1.0}
+[calibrate] wrote early_exit_probe/outputs/phase3_pool_run1/checkpoint-1000/thresholds.json
+[eval] validation rows=1145
+[eval] 8/1145
+[eval] 88/1145
+[eval] 168/1145
+[eval] 248/1145
+[eval] 328/1145
+[eval] 408/1145
+[eval] 488/1145
+[eval] 568/1145
+[eval] 648/1145
+[eval] 728/1145
+[eval] 808/1145
+[eval] 888/1145
+[eval] 968/1145
+[eval] 1048/1145
+[eval] 1128/1145
+{
+  "n": 1145,
+  "full_depth28_accuracy": 0.8113537117903931,
+  "routed_accuracy": 0.7912663755458516,
+  "routed_mean_depth": 13.36943231441048,
+  "routed_coverage_before_fallback": 0.9991266375545852,
+  "zero_shot_accuracy": null,
+  "thresholds_used": {
+    "8": {
+      "threshold": 0.8519424796104431,
+      "coverage": 0.2793741109530583,
+      "precision": 0.9002036452293396
+    },
+    "12": {
+      "threshold": 0.8138606548309326,
+      "coverage": 0.5786628733997156,
+      "precision": 0.9001966714859009
+    },
+    "20": {
+      "threshold": 0.937442421913147,
+      "coverage": 1.0,
+      "precision": 0.9857752323150635
+    },
+    "28": {
+      "threshold": 0.9998906850814819,
+      "coverage": 1.0,
+      "precision": 1.0
+    }
+  }
+}
+[eval] wrote early_exit_probe/outputs/phase3_pool_run1/checkpoint-1000/eval_results.json
+[N24News] batch 1/125
+[N24News] batch 26/125
+[N24News] batch 51/125
+[N24News] batch 76/125
+[N24News] batch 101/125
+{
+  "N24News": {
+    "n": 1000,
+    "n_choices": 24,
+    "min_choices": 24,
+    "chance": 0.041666666666666664,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.273,
+      "12": 0.421,
+      "20": 0.551,
+      "28": 0.549
+    },
+    "full_depth28_accuracy": 0.549,
+    "routed_accuracy": 0.492,
+    "routed_mean_depth": 13.356,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[HatefulMemes] batch 1/125
+[HatefulMemes] batch 26/125
+[HatefulMemes] batch 51/125
+[HatefulMemes] batch 76/125
+[HatefulMemes] batch 101/125
+{
+  "HatefulMemes": {
+    "n": 1000,
+    "n_choices": 2,
+    "min_choices": 2,
+    "chance": 0.5,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.51,
+      "12": 0.509,
+      "20": 0.579,
+      "28": 0.576
+    },
+    "full_depth28_accuracy": 0.576,
+    "routed_accuracy": 0.579,
+    "routed_mean_depth": 20.0,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[VOC2007] batch 1/125
+[VOC2007] batch 26/125
+[VOC2007] batch 51/125
+[VOC2007] batch 76/125
+[VOC2007] batch 101/125
+{
+  "VOC2007": {
+    "n": 1000,
+    "n_choices": 20,
+    "min_choices": 20,
+    "chance": 0.05,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.767,
+      "12": 0.79,
+      "20": 0.766,
+      "28": 0.763
+    },
+    "full_depth28_accuracy": 0.763,
+    "routed_accuracy": 0.776,
+    "routed_mean_depth": 9.024,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[ImageNet-A] batch 1/250
+[ImageNet-A] batch 26/250
+[ImageNet-A] batch 51/250
+[ImageNet-A] batch 76/250
+[ImageNet-A] batch 101/250
+[ImageNet-A] batch 126/250
+[ImageNet-A] batch 151/250
+[ImageNet-A] batch 176/250
+[ImageNet-A] batch 201/250
+[ImageNet-A] batch 226/250
+{
+  "ImageNet-A": {
+    "n": 1000,
+    "n_choices": 200,
+    "min_choices": 200,
+    "chance": 0.005,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.463,
+      "12": 0.732,
+      "20": 0.78,
+      "28": 0.767
+    },
+    "full_depth28_accuracy": 0.767,
+    "routed_accuracy": 0.701,
+    "routed_mean_depth": 10.684,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": true
+  }
+}
+[ImageNet-R] batch 1/250
+[ImageNet-R] batch 26/250
+[ImageNet-R] batch 51/250
+[ImageNet-R] batch 76/250
+[ImageNet-R] batch 101/250
+[ImageNet-R] batch 126/250
+[ImageNet-R] batch 151/250
+[ImageNet-R] batch 176/250
+[ImageNet-R] batch 201/250
+[ImageNet-R] batch 226/250
+{
+  "ImageNet-R": {
+    "n": 1000,
+    "n_choices": 200,
+    "min_choices": 200,
+    "chance": 0.005,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.736,
+      "12": 0.781,
+      "20": 0.864,
+      "28": 0.858
+    },
+    "full_depth28_accuracy": 0.858,
+    "routed_accuracy": 0.765,
+    "routed_mean_depth": 9.452,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[ObjectNet] batch 1/250
+[ObjectNet] batch 26/250
+[ObjectNet] batch 51/250
+[ObjectNet] batch 76/250
+[ObjectNet] batch 101/250
+[ObjectNet] batch 126/250
+[ObjectNet] batch 151/250
+[ObjectNet] batch 176/250
+[ObjectNet] batch 201/250
+[ObjectNet] batch 226/250
+{
+  "ObjectNet": {
+    "n": 1000,
+    "n_choices": 113,
+    "min_choices": 113,
+    "chance": 0.008849557522123894,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.649,
+      "12": 0.64,
+      "20": 0.746,
+      "28": 0.742
+    },
+    "full_depth28_accuracy": 0.742,
+    "routed_accuracy": 0.663,
+    "routed_mean_depth": 8.668,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[Country211] batch 1/250
+[Country211] batch 26/250
+[Country211] batch 51/250
+[Country211] batch 76/250
+[Country211] batch 101/250
+[Country211] batch 126/250
+[Country211] batch 151/250
+[Country211] batch 176/250
+[Country211] batch 201/250
+[Country211] batch 226/250
+{
+  "Country211": {
+    "n": 1000,
+    "n_choices": 211,
+    "min_choices": 211,
+    "chance": 0.004739336492890996,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.039,
+      "12": 0.075,
+      "20": 0.152,
+      "28": 0.142
+    },
+    "full_depth28_accuracy": 0.142,
+    "routed_accuracy": 0.122,
+    "routed_mean_depth": 15.644,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[Visual7W] batch 1/125
+[Visual7W] batch 26/125
+[Visual7W] batch 51/125
+[Visual7W] batch 76/125
+[Visual7W] batch 101/125
+{
+  "Visual7W": {
+    "n": 1000,
+    "n_choices": 4,
+    "min_choices": 4,
+    "chance": 0.25,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.776,
+      "12": 0.861,
+      "20": 0.886,
+      "28": 0.883
+    },
+    "full_depth28_accuracy": 0.883,
+    "routed_accuracy": 0.884,
+    "routed_mean_depth": 12.868,
+    "routed_coverage_before_fallback": 0.999,
+    "approximate_candidate_set": false
+  }
+}
+[ScienceQA] batch 1/127
+[ScienceQA] batch 26/127
+[ScienceQA] batch 51/127
+[ScienceQA] batch 76/127
+[ScienceQA] batch 101/127
+[ScienceQA] batch 126/127
+{
+  "ScienceQA": {
+    "n": 1000,
+    "n_choices": 5,
+    "min_choices": 2,
+    "chance": 0.35856666666666664,
+    "zero_shot_accuracy": null,
+    "per_depth_accuracy": {
+      "8": 0.695,
+      "12": 0.779,
+      "20": 0.871,
+      "28": 0.872
+    },
+    "full_depth28_accuracy": 0.872,
+    "routed_accuracy": 0.84,
+    "routed_mean_depth": 13.992,
+    "routed_coverage_before_fallback": 1.0,
+    "approximate_candidate_set": false
+  }
+}
+[eval_mmeb] wrote early_exit_probe/outputs/phase3_pool_run1/checkpoint-1000/eval_mmeb_results.json
+[phase3] ALL DONE
