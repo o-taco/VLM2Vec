@@ -62,6 +62,8 @@ class HaltingRunner:
 
     def _make_hook(self, d):
         def hook(module, args, output):
+            if self.mode == "profile" and d > self.stop_depth:
+                return
             if self.mode == "fixed" and d != self.stop_depth:
                 return
             if self.mode == "full" and d != self.final:
@@ -78,6 +80,10 @@ class HaltingRunner:
                 agree = torch.sigmoid(self.probe.agreement_logits_for_predicted(z, pred))
                 if agree.item() < thr:                       # the per-layer host sync is real cost
                     return
+            if self.mode == "profile" and d < self.stop_depth:
+                # Every-layer routing cost without exiting: the agreement check and its host sync.
+                torch.sigmoid(self.probe.agreement_logits_for_predicted(z, pred)).item()
+                return
             raise Halt(d, int(pred.item()))
         return hook
 
@@ -122,6 +128,47 @@ def summarize(xs):
     return {"mean": statistics.fmean(xs), "median": statistics.median(xs)} if xs else None
 
 
+def profile_every_layer(model, probe, gen_model, processor, args):
+    """Per dataset, mean wall clock to halt at each depth d (agreement checked at layers < d),
+    plus full depth and generation. Combine with any reported mean exit depth: time is
+    affine in d, so E[t(d*)] = t(E[d*]) up to the fit residual reported here."""
+    depth_max = len(model.model.language_model.layers)
+    depths = list(range(1, depth_max + 1))
+    runner = HaltingRunner(model, probe, depths, {})
+    results = {"gpu": torch.cuda.get_device_name(), "batch_size": 1, "depths": depths, "per_dataset": {}}
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    for name in args.datasets:
+        examples = load_dataset(name, args.limit + args.warmup)
+        per_depth = {d: [] for d in depths}
+        gen_ms, gen_tokens = [], []
+        for i, ex in enumerate(examples):
+            batch, pos, _ = collate([ex], processor)
+            batch = {k: (v.cuda() if torch.is_tensor(v) else v) for k, v in batch.items()}
+            times = {d: runner(batch, pos, "profile", d)["ms"] for d in depths}
+            gen = time_generation(gen_model, processor, ex) if gen_model is not None else None
+            if i < args.warmup:
+                continue
+            for d in depths:
+                per_depth[d].append(times[d])
+            if gen is not None:
+                gen_ms.append(gen[0])
+                gen_tokens.append(gen[1])
+        mean_t = [statistics.fmean(per_depth[d]) for d in depths]
+        slope, intercept = statistics.linear_regression(depths, mean_t)
+        resid = max(abs(t - (intercept + slope * d)) for d, t in zip(depths, mean_t))
+        s = {"n": len(per_depth[1]), "n_choices": len(examples[0].choices), "ms_by_depth": mean_t,
+             "affine_fit": {"ms_at_0": intercept, "ms_per_layer": slope, "max_abs_residual_ms": resid}}
+        if gen_ms:
+            s["gen_ms"], s["gen_tokens"] = statistics.fmean(gen_ms), statistics.fmean(gen_tokens)
+        results["per_dataset"][name] = s
+        json.dump(results, open(out_path, "w"), indent=2)
+        g = f"  gen {s['gen_ms']:.0f}ms" if gen_ms else ""
+        print(f"[{name}] K={s['n_choices']} t(1) {mean_t[0]:.0f}ms  t({depth_max}) {mean_t[-1]:.0f}ms  "
+              f"fit {intercept:.0f} + {slope:.1f}*d (max resid {resid:.1f}ms){g}", flush=True)
+    print(f"wrote {out_path}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
@@ -130,6 +177,9 @@ def main():
     ap.add_argument("--limit", type=int, default=50, help="rows per dataset")
     ap.add_argument("--warmup", type=int, default=3)
     ap.add_argument("--generation", action="store_true", help="also time the generation baseline")
+    ap.add_argument("--profile_every_layer", action="store_true",
+                    help="time halting at every depth 1..D with the agreement check run at every layer "
+                         "(the every-layer method's cost); exit decisions are forced, so weights don't matter")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -143,8 +193,10 @@ def main():
     probe = DepthProbe().cuda().eval()
     load_checkpoint(backbone, probe, args.checkpoint)
     model = backbone.merge_and_unload().eval()
-    runner = HaltingRunner(model, probe, DEPTH_TAPS, thresholds)
     gen_model = load_backbone(lora=False).cuda().eval() if args.generation else None
+    if args.profile_every_layer:
+        return profile_every_layer(model, probe, gen_model, processor, args)
+    runner = HaltingRunner(model, probe, DEPTH_TAPS, thresholds)
 
     results = {"checkpoint": str(ckpt), "depths": list(DEPTH_TAPS), "thresholds": thresholds,
                "gpu": torch.cuda.get_device_name(), "batch_size": 1, "per_dataset": {}}
