@@ -55,5 +55,5 @@ def probe_for_checkpoint(ckpt_dir):
     import os
     from .model import build_probe
     cfg_path = os.path.join(ckpt_dir, "probe_config.json")
-    kind = json.load(open(cfg_path))["probe"] if os.path.exists(cfg_path) else "film_input"
-    return build_probe(kind)
+    cfg = json.load(open(cfg_path)) if os.path.exists(cfg_path) else {"probe": "film_input"}
+    return build_probe(cfg.pop("probe"), **cfg)

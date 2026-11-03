@@ -44,6 +44,15 @@ SPLIT_INDEX_PATH = REPO_ROOT / "early_exit_probe" / "outputs" / "aokvqa_split_in
 TABLE3 = {"A-OKVQA": (3363, 987), "CUB-200": (1256, 337), "ScienceQA": (1236, 332),
           "ImageNet": (303, 46), "iNaturalist": (242, 90)}
 POOL_SEED = 26091615
+# Component ablations (paper Sec. 6 TODO), each one change from the main recipe.
+ABLATIONS = {
+    "none": {"probe": "film_hidden"},
+    "no_film": {"probe": "film_hidden", "film": False},
+    "independent": {"probe": "independent"},
+    "no_last": {"probe": "film_hidden", "last_context": False},
+    "no_lora": {"probe": "film_hidden"},            # adapters stay at their B=0 init (frozen)
+    "selected_depth": {"probe": "film_hidden", "depths": [8, 12, 20, 28]},
+}
 
 
 def load_source(name: str, split: str):
@@ -102,6 +111,7 @@ def main():
     ap.add_argument("--weight_decay", type=float, default=0.01)
     ap.add_argument("--clip", type=float, default=1.0)
     ap.add_argument("--max_rows", type=int, default=None, help="truncate the pool (smoke tests)")
+    ap.add_argument("--ablation", default="none", choices=list(ABLATIONS))
     ap.add_argument("--output_dir", required=True)
     args = ap.parse_args()
 
@@ -122,11 +132,17 @@ def main():
 
     processor = load_processor()
     backbone = load_backbone(lora=True, lora_r=64, lora_alpha=128, lora_dropout=0.05).to(device).train()
-    probe, depths = build_probe("film_hidden")
+    probe_cfg = dict(ABLATIONS[args.ablation])
+    probe, depths = build_probe(probe_cfg["probe"], **{k: v for k, v in probe_cfg.items() if k != "probe"})
     probe = probe.to(device).train()
+    if args.ablation == "no_lora":
+        for p in backbone.parameters():
+            p.requires_grad_(False)
     lora_params = [p for p in backbone.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW([{"params": lora_params, "lr": args.lr_lora},
-                                   {"params": list(probe.parameters()), "lr": args.lr_heads}],
+    groups = [{"params": list(probe.parameters()), "lr": args.lr_heads}]
+    if lora_params:
+        groups.insert(0, {"params": lora_params, "lr": args.lr_lora})
+    optimizer = torch.optim.AdamW(groups,
                                   weight_decay=args.weight_decay)
     print(f"[train] trainable: LoRA {sum(p.numel() for p in lora_params):,}  "
           f"heads {sum(p.numel() for p in probe.parameters()):,}", flush=True)
@@ -154,15 +170,15 @@ def main():
                       f" ({rec['elapsed_s']:.0f}s)", flush=True)
                 window = {"answer": [], "agreement": []}
             if n_updates % 256 == 0 or i == len(rows):
-                save(backbone, probe, out_dir / f"checkpoint-{n_updates}")
+                save(backbone, probe, out_dir / f"checkpoint-{n_updates}", probe_cfg)
     print(f"[train] done: {n_updates} updates in {time.perf_counter() - started:.0f}s", flush=True)
 
 
-def save(backbone, probe, ckpt):
+def save(backbone, probe, ckpt, probe_cfg):
     ckpt.mkdir(parents=True, exist_ok=True)
     backbone.save_pretrained(str(ckpt / "lora_adapter"))
     torch.save(probe.state_dict(), ckpt / "probe.pt")
-    json.dump({"probe": "film_hidden"}, open(ckpt / "probe_config.json", "w"))
+    json.dump(probe_cfg, open(ckpt / "probe_config.json", "w"))
     print(f"[train] saved {ckpt}", flush=True)
 
 

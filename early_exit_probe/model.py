@@ -120,12 +120,16 @@ class FiLMTrunkProbe(nn.Module):
     embedding as GELU((1 + gamma_l(e_d)) * W_l u + beta_l(e_d)); scalar answer and agreement
     heads. Same interface as DepthProbe."""
 
-    def __init__(self, hidden=HIDDEN, depth_emb_dim=DEPTH_EMB_DIM, trunk_hidden=TRUNK_HIDDEN, max_depth=MAX_DEPTH):
+    def __init__(self, hidden=HIDDEN, depth_emb_dim=DEPTH_EMB_DIM, trunk_hidden=TRUNK_HIDDEN, max_depth=MAX_DEPTH,
+                 film=True, last_context=True):
         super().__init__()
-        self.max_depth = max_depth
+        # Ablations: film=False drops depth conditioning (one depth-blind trunk);
+        # last_context=False scores each candidate from h_i alone, without h_K.
+        self.max_depth, self.film, self.last_context, self.hidden = max_depth, film, last_context, hidden
+        in_dim = 2 * hidden if last_context else hidden
         self.depth_embed = nn.Embedding(max_depth, depth_emb_dim)
-        self.ln = nn.LayerNorm(2 * hidden)
-        self.linears = nn.ModuleList([nn.Linear(2 * hidden, trunk_hidden), nn.Linear(trunk_hidden, trunk_hidden)])
+        self.ln = nn.LayerNorm(in_dim)
+        self.linears = nn.ModuleList([nn.Linear(in_dim, trunk_hidden), nn.Linear(trunk_hidden, trunk_hidden)])
         self.gammas = nn.ModuleList([nn.Linear(depth_emb_dim, trunk_hidden) for _ in range(2)])
         self.betas = nn.ModuleList([nn.Linear(depth_emb_dim, trunk_hidden) for _ in range(2)])
         for m in (*self.gammas, *self.betas):  # residual-scale FiLM starts as the identity
@@ -137,9 +141,14 @@ class FiLMTrunkProbe(nn.Module):
 
     def forward(self, x: torch.Tensor, depth: int):
         e = self.depth_embed(torch.full((1,), depth - 1, device=x.device, dtype=torch.long))  # (1, emb)
+        if not self.last_context:
+            x = x[..., :self.hidden]
         u = self.ln(x.float())  # backbone states are bf16; the probe runs in fp32
         for lin, g, b in zip(self.linears, self.gammas, self.betas):
-            u = self.act((1 + g(e)).unsqueeze(1) * lin(u) + b(e).unsqueeze(1))
+            u = lin(u)
+            if self.film:
+                u = (1 + g(e)).unsqueeze(1) * u + b(e).unsqueeze(1)
+            u = self.act(u)
         return self.answer_head(u).squeeze(-1), u
 
     def agreement_logits_for_predicted(self, z: torch.Tensor, pred_idx: torch.Tensor):
@@ -147,13 +156,37 @@ class FiLMTrunkProbe(nn.Module):
         return self.agreement_head(z_pred).squeeze(-1)
 
 
-def build_probe(kind: str):
+class IndependentDepthProbe(nn.Module):
+    """Ablation: a separate trunk and heads per depth (no sharing, so no FiLM)."""
+
+    def __init__(self, depths, **kw):
+        super().__init__()
+        self.trunks = nn.ModuleDict({str(d): FiLMTrunkProbe(film=False, **kw) for d in depths})
+        self._last_depth = None  # a key, not a module, so it isn't registered in state_dict
+
+    @property
+    def answer_head(self):  # device lookups in load_checkpoint; not a registered submodule
+        return next(iter(self.trunks.values())).answer_head
+
+    def forward(self, x, depth):
+        self._last_depth = str(depth)
+        return self.trunks[self._last_depth](x, depth)
+
+    def agreement_logits_for_predicted(self, z, pred_idx):
+        return self.trunks[self._last_depth].agreement_logits_for_predicted(z, pred_idx)
+
+
+def build_probe(kind: str, depths=None, film=True, last_context=True):
     """'film_input' = phase 1-3 DepthProbe at taps (8, 12, 20, 28); 'film_hidden' = the
-    paper's every-layer FiLMTrunkProbe at depths 1..28. Returns (probe, depths)."""
+    paper's FiLMTrunkProbe (every layer unless `depths` is given); 'independent' = one trunk
+    per depth. Returns (probe, depths)."""
     if kind == "film_input":
         return DepthProbe(), DEPTH_TAPS
+    depths = tuple(depths) if depths else EVERY_LAYER
     if kind == "film_hidden":
-        return FiLMTrunkProbe(), EVERY_LAYER
+        return FiLMTrunkProbe(film=film, last_context=last_context), depths
+    if kind == "independent":
+        return IndependentDepthProbe(depths, last_context=last_context), depths
     raise ValueError(kind)
 
 
