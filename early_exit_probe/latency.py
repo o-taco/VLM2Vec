@@ -30,8 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from early_exit_probe.batching import collate, collate_for_generation
 from early_exit_probe.data_aokvqa import AOKVQADataset, CHOICE_LETTERS
 from early_exit_probe.data_mmeb_eval import ALL_DATASETS, MMEBClassificationDataset
-from early_exit_probe.inference import load_checkpoint
-from early_exit_probe.model import DEPTH_TAPS, DepthProbe, load_backbone, load_processor
+from early_exit_probe.inference import load_checkpoint, probe_for_checkpoint
+from early_exit_probe.model import load_backbone, load_processor
 
 AOKVQA = "A-OKVQA"
 
@@ -184,18 +184,23 @@ def main():
     args = ap.parse_args()
 
     ckpt = Path(args.checkpoint)
-    thr_raw = json.load(open(args.thresholds or ckpt / "thresholds.json"))["thresholds"]
+    thr_path = Path(args.thresholds) if args.thresholds else ckpt / "thresholds.json"
+    thr_raw = json.load(open(thr_path))["thresholds"] if thr_path.exists() else {}
+    # None marks a disabled exit (sequential calibration found no qualifying cutoff).
     thresholds = {int(d): (v["threshold"] if isinstance(v, dict) else v) for d, v in thr_raw.items()}
+    thresholds = {d: t for d, t in thresholds.items() if t is not None}
 
     processor = load_processor()
     processor.tokenizer.padding_side = "left"
     backbone = load_backbone(lora=True).cuda().eval()
-    probe = DepthProbe().cuda().eval()
+    probe, DEPTH_TAPS = probe_for_checkpoint(args.checkpoint)
+    probe = probe.cuda().eval()
     load_checkpoint(backbone, probe, args.checkpoint)
     model = backbone.merge_and_unload().eval()
     gen_model = load_backbone(lora=False).cuda().eval() if args.generation else None
     if args.profile_every_layer:
         return profile_every_layer(model, probe, gen_model, processor, args)
+    assert thresholds or args.profile_every_layer, f"no thresholds at {thr_path}"
     runner = HaltingRunner(model, probe, DEPTH_TAPS, thresholds)
 
     results = {"checkpoint": str(ckpt), "depths": list(DEPTH_TAPS), "thresholds": thresholds,
@@ -205,7 +210,8 @@ def main():
     for name in args.datasets:
         examples = load_dataset(name, args.limit + args.warmup)
         rec = {k: [] for k in ("cpu_ms", "full_ms", "routed_ms", "prefix_ms", "routed_depth", "gen_ms", "gen_tokens")}
-        rec.update({f"fixed{d}_ms": [] for d in DEPTH_TAPS[:-1]})
+        fixed_depths = [d for d in DEPTH_TAPS[:-1] if d in thresholds] if len(DEPTH_TAPS) <= 8 else []
+        rec.update({f"fixed{d}_ms": [] for d in fixed_depths})
         agree_full = 0
         for i, ex in enumerate(examples):
             t0 = time.perf_counter()
@@ -214,7 +220,7 @@ def main():
             batch = {k: (v.cuda() if torch.is_tensor(v) else v) for k, v in batch.items()}
             full = runner(batch, pos, "full")
             routed = runner(batch, pos, "route")
-            fixed = {d: runner(batch, pos, "fixed", d) for d in DEPTH_TAPS[:-1]}
+            fixed = {d: runner(batch, pos, "fixed", d) for d in fixed_depths}
             gen = time_generation(gen_model, processor, ex) if gen_model is not None else None
             if i < args.warmup:
                 continue

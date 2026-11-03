@@ -46,3 +46,14 @@ def load_checkpoint(backbone, probe, ckpt_dir):
         os.path.join(ckpt_dir, "probe.pt"), map_location=probe.answer_head.weight.device, weights_only=True,
     ))
     return backbone, probe
+
+
+def probe_for_checkpoint(ckpt_dir):
+    """(probe, depths) for a checkpoint: probe_config.json names the probe kind; checkpoints
+    without one are the phase 1-3 4-tap DepthProbe."""
+    import json
+    import os
+    from .model import build_probe
+    cfg_path = os.path.join(ckpt_dir, "probe_config.json")
+    kind = json.load(open(cfg_path))["probe"] if os.path.exists(cfg_path) else "film_input"
+    return build_probe(kind)

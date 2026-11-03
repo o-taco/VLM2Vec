@@ -244,6 +244,9 @@ def main():
     ap.add_argument("--target", type=float, default=0.90)
     ap.add_argument("--sweep", default="0.70:0.995:0.005", help="start:stop:step of calibration targets")
     ap.add_argument("--out", required=True, help="output prefix (.json and .png/.pdf are written)")
+    ap.add_argument("--write_thresholds", default=None,
+                    help="write the agreement policy's fitted cutoffs at --target as a thresholds.json "
+                         "that latency.py can halt with")
     args = ap.parse_args()
     assert (args.calibration_rows is None) != (args.sha_split is None), "pick one calibration source"
 
@@ -286,6 +289,10 @@ def main():
         else:
             results[f"main_{POLICY_NAME[s]}"] = entry
 
+    if args.write_thresholds:
+        json.dump({"target": args.target, "calibration": "sha_split" if args.sha_split else args.calibration_rows,
+                   "thresholds": {str(d): {"threshold": c} for d, c in results["main"]["cutoffs"].items()}},
+                  open(args.write_thresholds, "w"), indent=2)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     json.dump(results, open(out.with_suffix(".json"), "w"), indent=2, default=str)
@@ -295,7 +302,8 @@ def main():
     for g, m in results["main"]["summary"].items():
         print(f"  [{g}] final {m['final_acc']:.2f}  agreement-routed {m['routed_acc']:.2f}  "
               f"random-matched {m['random_matched_acc']:.2f}  depth {m['mean_depth']:.2f}  "
-              f"coverage {m['coverage']:.3f}  early-agree {m['early_agreement_pooled']:.3f}")
+              f"coverage {m['coverage']:.3f}  early-agree "
+              + (f"{m['early_agreement_pooled']:.3f}" if m["early_agreement_pooled"] is not None else "n/a"))
         st = results["static"][g]
         below = [p for p in st if p["depth"] <= m["mean_depth"]]
         if below:

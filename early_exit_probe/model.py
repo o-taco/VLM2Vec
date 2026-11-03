@@ -111,6 +111,52 @@ class DepthProbe(nn.Module):
         return self.agreement_head(z_pred).squeeze(-1)
 
 
+EVERY_LAYER = tuple(range(1, MAX_DEPTH + 1))
+
+
+class FiLMTrunkProbe(nn.Module):
+    """The paper's every-layer joint model (Sec. 3.2, Eqs. 1-4; Appendix A): input LayerNorm
+    once on concat(h_i, h_K); two 512-wide hidden layers, each FiLM-modulated by the depth
+    embedding as GELU((1 + gamma_l(e_d)) * W_l u + beta_l(e_d)); scalar answer and agreement
+    heads. Same interface as DepthProbe."""
+
+    def __init__(self, hidden=HIDDEN, depth_emb_dim=DEPTH_EMB_DIM, trunk_hidden=TRUNK_HIDDEN, max_depth=MAX_DEPTH):
+        super().__init__()
+        self.max_depth = max_depth
+        self.depth_embed = nn.Embedding(max_depth, depth_emb_dim)
+        self.ln = nn.LayerNorm(2 * hidden)
+        self.linears = nn.ModuleList([nn.Linear(2 * hidden, trunk_hidden), nn.Linear(trunk_hidden, trunk_hidden)])
+        self.gammas = nn.ModuleList([nn.Linear(depth_emb_dim, trunk_hidden) for _ in range(2)])
+        self.betas = nn.ModuleList([nn.Linear(depth_emb_dim, trunk_hidden) for _ in range(2)])
+        for m in (*self.gammas, *self.betas):  # residual-scale FiLM starts as the identity
+            nn.init.zeros_(m.weight)
+            nn.init.zeros_(m.bias)
+        self.act = nn.GELU()
+        self.answer_head = nn.Linear(trunk_hidden, 1)
+        self.agreement_head = nn.Linear(trunk_hidden, 1)
+
+    def forward(self, x: torch.Tensor, depth: int):
+        e = self.depth_embed(torch.full((1,), depth - 1, device=x.device, dtype=torch.long))  # (1, emb)
+        u = self.ln(x.float())  # backbone states are bf16; the probe runs in fp32
+        for lin, g, b in zip(self.linears, self.gammas, self.betas):
+            u = self.act((1 + g(e)).unsqueeze(1) * lin(u) + b(e).unsqueeze(1))
+        return self.answer_head(u).squeeze(-1), u
+
+    def agreement_logits_for_predicted(self, z: torch.Tensor, pred_idx: torch.Tensor):
+        z_pred = z[torch.arange(z.size(0), device=z.device), pred_idx]
+        return self.agreement_head(z_pred).squeeze(-1)
+
+
+def build_probe(kind: str):
+    """'film_input' = phase 1-3 DepthProbe at taps (8, 12, 20, 28); 'film_hidden' = the
+    paper's every-layer FiLMTrunkProbe at depths 1..28. Returns (probe, depths)."""
+    if kind == "film_input":
+        return DepthProbe(), DEPTH_TAPS
+    if kind == "film_hidden":
+        return FiLMTrunkProbe(), EVERY_LAYER
+    raise ValueError(kind)
+
+
 def locate_choice_token_positions(processor, text: str, n_choices: int, final_len: int) -> list[int]:
     """Find, for one example, the final (post image-token-expansion) sequence position of
     each choice's last content token: "A. toothpick" -> the token for "pick".

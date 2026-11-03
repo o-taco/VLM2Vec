@@ -3,11 +3,25 @@ to extract per-depth, per-choice concat vectors ready for the DepthProbe.
 """
 from __future__ import annotations
 
+import os
+
 import torch
 import torch.nn.functional as F
 
 from .data_aokvqa import Example, build_prompt
 from .model import DEPTH_TAPS, locate_choice_token_positions
+
+# Paper protocol (Sec. 4): every image is resized to 336x336 bicubic RGB before the native
+# processor. Set EARLY_EXIT_IMAGE_SIZE=336 to apply it; unset keeps each loader's own sizing
+# (the phase 1-3 runs used a 768-px longest-side cap).
+IMAGE_SIZE = int(os.environ["EARLY_EXIT_IMAGE_SIZE"]) if os.environ.get("EARLY_EXIT_IMAGE_SIZE") else None
+
+
+def prepare_image(image):
+    if IMAGE_SIZE is None:
+        return image
+    from PIL import Image
+    return image.convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE), Image.BICUBIC)
 
 
 def collate(examples: list[Example], processor):
@@ -18,7 +32,7 @@ def collate(examples: list[Example], processor):
         prompt = build_prompt(ex.question, ex.choices)
         messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]}]
         text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-        enc = processor(text=[text], images=[ex.image], return_tensors="pt")
+        enc = processor(text=[text], images=[prepare_image(ex.image)], return_tensors="pt")
         final_len = enc["input_ids"].shape[1]
         choice_positions = locate_choice_token_positions(processor, text, len(ex.choices), final_len)
         per_example.append((enc, choice_positions, ex))
@@ -78,7 +92,7 @@ def collate_for_generation(examples: list[Example], processor, suffix: str = "")
         prompt = build_prompt(ex.question, ex.choices) + suffix
         messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]}]
         text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        enc = processor(text=[text], images=[ex.image], return_tensors="pt")
+        enc = processor(text=[text], images=[prepare_image(ex.image)], return_tensors="pt")
         per_example.append((enc, ex))
         max_len = max(max_len, enc["input_ids"].shape[1])
 

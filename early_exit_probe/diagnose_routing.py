@@ -20,34 +20,34 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from early_exit_probe.data_aokvqa import AOKVQADataset
 from early_exit_probe.data_mmeb_eval import ALL_DATASETS, MMEBClassificationDataset
 from early_exit_probe.eval_mmeb import default_batch_size
-from early_exit_probe.inference import load_checkpoint, run_batch_all_depths
-from early_exit_probe.model import DEPTH_TAPS, DepthProbe, load_backbone, load_processor
+from early_exit_probe.inference import load_checkpoint, probe_for_checkpoint, run_batch_all_depths
+from early_exit_probe.model import DEPTH_TAPS, load_backbone, load_processor
 
 AOKVQA = "A-OKVQA"
 FIELDS = ("agreement_prob", "answer_maxprob", "answer_margin", "pred", "agrees_with_28", "correct")
 
 
-def collect(name, backbone, probe, processor, device, limit, batch_size):
+def collect(name, backbone, probe, processor, device, limit, batch_size, depths=DEPTH_TAPS):
     """Returns {depth: {field: 1-D cpu tensor over rows}} for one evaluation set."""
     if name == AOKVQA:
-        ds = AOKVQADataset("validation", split_filter=None)
+        ds = AOKVQADataset("validation", split_filter=None, limit=limit)  # first `limit` val rows
         counts = [4] * len(ds)
     else:
         ds = MMEBClassificationDataset(name, limit=limit)
         counts = ds.choice_counts
-    return collect_dataset(name, ds, counts, backbone, probe, processor, device, batch_size)
+    return collect_dataset(name, ds, counts, backbone, probe, processor, device, batch_size, depths)
 
 
-def collect_dataset(name, ds, counts, backbone, probe, processor, device, batch_size=None):
+def collect_dataset(name, ds, counts, backbone, probe, processor, device, batch_size=None, depths=DEPTH_TAPS):
     bs = batch_size or default_batch_size(max(counts))
     groups = {}
     for i, c in enumerate(counts):
         groups.setdefault(c, []).append(i)
     batches = [idxs[s:s + bs] for _, idxs in sorted(groups.items()) for s in range(0, len(idxs), bs)]
-    out = {d: {f: [] for f in FIELDS} for d in DEPTH_TAPS}
+    out = {d: {f: [] for f in FIELDS} for d in depths}
     for b, batch_idx in enumerate(batches):
-        per_depth, _ = run_batch_all_depths(backbone, probe, processor, [ds[i] for i in batch_idx], device)
-        for d in DEPTH_TAPS:
+        per_depth, _ = run_batch_all_depths(backbone, probe, processor, [ds[i] for i in batch_idx], device, depths)
+        for d in depths:
             for f in FIELDS:
                 out[d][f].append(per_depth[d][f].cpu())
         if b % 25 == 0:
@@ -70,14 +70,17 @@ def auroc(scores: torch.Tensor, labels: torch.Tensor):
 
 
 def summarize(rows, thresholds):
-    top = max(DEPTH_TAPS)
+    depths = sorted(rows)
+    top = max(depths)
     n = len(rows[top]["pred"])
     correct28 = rows[top]["correct"]
     remaining = torch.ones(n, dtype=torch.bool)
     summary = {"n": n, "full_depth28_accuracy": correct28.float().mean().item(), "per_depth": {}}
     routed_correct, routed_depth = torch.zeros(n, dtype=torch.bool), torch.full((n,), top)
-    for d in DEPTH_TAPS:
+    for d in depths:
         r = rows[d]
+        if str(d) not in thresholds:
+            continue
         thr = thresholds[str(d)]["threshold"]
         clears = r["agreement_prob"] >= thr
         exits = clears & remaining
@@ -117,7 +120,9 @@ def main():
     args = ap.parse_args()
 
     ckpt = Path(args.checkpoint)
-    thresholds = json.load(open(args.thresholds or ckpt / "thresholds.json"))["thresholds"]
+    thr_path = Path(args.thresholds) if args.thresholds else ckpt / "thresholds.json"
+    # Every-layer checkpoints are calibrated offline (routing_baselines.py) from these rows.
+    thresholds = json.load(open(thr_path))["thresholds"] if thr_path.exists() else None
     rows_path, out_path = ckpt / args.rows_file, ckpt / Path(args.rows_file).with_suffix(".json").name.replace("_rows", "")
     all_rows = torch.load(rows_path, weights_only=True) if rows_path.exists() else {}
 
@@ -127,13 +132,17 @@ def main():
         processor = load_processor()
         processor.tokenizer.padding_side = "left"
         backbone = load_backbone(lora=True).to(device).eval()
-        probe = DepthProbe().to(device)
+        probe, depths = probe_for_checkpoint(args.checkpoint)
+        probe = probe.to(device)
         load_checkpoint(backbone, probe, args.checkpoint)
         probe.eval()
         for name in todo:
-            all_rows[name] = collect(name, backbone, probe, processor, device, args.limit, args.batch_size)
+            all_rows[name] = collect(name, backbone, probe, processor, device, args.limit, args.batch_size, depths)
             torch.save(all_rows, rows_path)  # incremental: a crash keeps finished sets
 
+    if thresholds is None:
+        print(f"[diagnose] rows saved to {rows_path}; no thresholds.json, skipping summary", flush=True)
+        return
     results = {name: summarize(all_rows[name], thresholds) for name in args.datasets}
     json.dump(results, open(out_path, "w"), indent=2)
     print(f"[diagnose] wrote {out_path}", flush=True)
