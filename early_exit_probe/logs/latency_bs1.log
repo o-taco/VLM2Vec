@@ -1,0 +1,12 @@
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[N24News] K=24 full 300ms  routed 205ms (depth 13.0)  prefix 124ms  speedup 1.46x vs depth-proxy 2.16x  gen 376ms
+[HatefulMemes] K=2 full 210ms  routed 177ms (depth 20.0)  prefix 93ms  speedup 1.19x vs depth-proxy 1.40x  gen 258ms
+[VOC2007] K=20 full 155ms  routed 86ms (depth 9.0)  prefix 52ms  speedup 1.80x vs depth-proxy 3.12x  gen 241ms
+[ImageNet-A] K=200 full 640ms  routed 288ms (depth 10.2)  prefix 89ms  speedup 2.22x vs depth-proxy 2.76x  gen 805ms
+[ImageNet-R] K=200 full 642ms  routed 275ms (depth 9.5)  prefix 87ms  speedup 2.34x vs depth-proxy 2.94x  gen 816ms
+[ObjectNet] K=113 full 478ms  routed 244ms (depth 8.5)  prefix 144ms  speedup 1.96x vs depth-proxy 3.30x  gen 619ms
+[Country211] K=211 full 628ms  routed 361ms (depth 14.5)  prefix 77ms  speedup 1.74x vs depth-proxy 1.93x  gen 831ms
+[Visual7W] K=4 full 194ms  routed 134ms (depth 13.0)  prefix 79ms  speedup 1.45x vs depth-proxy 2.15x  gen 253ms
+[ScienceQA] K=3 full 193ms  routed 141ms (depth 14.8)  prefix 83ms  speedup 1.37x vs depth-proxy 1.89x  gen 248ms
+[A-OKVQA] K=4 full 243ms  routed 178ms (depth 14.1)  prefix 114ms  speedup 1.36x vs depth-proxy 1.99x  gen 304ms
+wrote early_exit_probe/outputs/phase3_pool_run1/checkpoint-1000/latency/latency_bs1.json

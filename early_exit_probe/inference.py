@@ -22,7 +22,10 @@ def run_batch_all_depths(backbone, probe, processor, examples, device, depths=DE
         pred = logits.argmax(dim=-1)
         agreement_logit = probe.agreement_logits_for_predicted(z, pred)
         agreement_prob = torch.sigmoid(agreement_logit)
-        per_depth[d] = {"pred": pred, "agreement_prob": agreement_prob}
+        # Answer-head confidences, for the answer-confidence routing baselines.
+        top2 = logits.float().softmax(dim=-1).topk(min(2, logits.size(-1)), dim=-1).values
+        per_depth[d] = {"pred": pred, "agreement_prob": agreement_prob, "answer_maxprob": top2[:, 0],
+                        "answer_margin": top2[:, 0] - (top2[:, 1] if top2.size(-1) > 1 else 0)}
 
     pred_28 = per_depth[max(depths)]["pred"]
     for d in depths:

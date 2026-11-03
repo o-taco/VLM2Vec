@@ -1,0 +1,42 @@
+[cal:A-OKVQA] batch 1/320
+[cal:A-OKVQA] batch 26/320
+[cal:A-OKVQA] batch 51/320
+[cal:A-OKVQA] batch 76/320
+[cal:A-OKVQA] batch 101/320
+[cal:A-OKVQA] batch 126/320
+[cal:A-OKVQA] batch 151/320
+[cal:A-OKVQA] batch 176/320
+[cal:A-OKVQA] batch 201/320
+[cal:A-OKVQA] batch 226/320
+[cal:A-OKVQA] batch 251/320
+[cal:A-OKVQA] batch 276/320
+[cal:A-OKVQA] batch 301/320
+[cal:ScienceQA] batch 1/121
+[cal:ScienceQA] batch 26/121
+[cal:ScienceQA] batch 51/121
+[cal:ScienceQA] batch 76/121
+[cal:ScienceQA] batch 101/121
+[cal:CUB-200] batch 1/225
+[cal:CUB-200] batch 26/225
+[cal:CUB-200] batch 51/225
+[cal:CUB-200] batch 76/225
+[cal:CUB-200] batch 101/225
+[cal:CUB-200] batch 126/225
+[cal:CUB-200] batch 151/225
+[cal:CUB-200] batch 176/225
+[cal:CUB-200] batch 201/225
+
+[recalibrate] pool=A-OKVQA+ScienceQA rows={'A-OKVQA': 2559, 'ScienceQA': 956}
+  depth 8: threshold 0.8519 coverage 0.279
+  depth 12: threshold 0.8139 coverage 0.579
+  depth 20: threshold 0.9374 coverage 1.000
+  classification: full 62.81  routed 58.54  mean depth 12.40
+  vqa: full 85.55  routed 83.84  mean depth 13.41
+
+[recalibrate] pool=A-OKVQA+ScienceQA+CUB-200 rows={'A-OKVQA': 2559, 'ScienceQA': 956, 'CUB-200': 899}
+  depth 8: threshold 0.9060 coverage 0.160
+  depth 12: threshold 0.9031 coverage 0.324
+  depth 20: threshold 0.9374 coverage 1.000
+  classification: full 62.81  routed 61.36  mean depth 14.56
+  vqa: full 85.55  routed 84.97  mean depth 15.42
+[recalibrate] wrote early_exit_probe/outputs/phase3_pool_run1/checkpoint-1000/recalibration.json
