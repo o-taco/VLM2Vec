@@ -34,7 +34,7 @@ def main():
     rows = {}
     print(f"{prof['gpu']}, batch size {prof['batch_size']}")
     print(f"{'dataset':13s}{'K':>4s} {'depth':>6s} {'full ms':>8s} {'routed':>7s} {'gen':>6s} "
-          f"{'speedup':>8s} {'proxy':>6s} {'gen/routed':>10s} {'fit resid':>9s}")
+          f"{'gen/routed':>10s} {'speedup':>8s} {'proxy':>6s} {'fit resid':>9s}")
     for name, d_bar in PAPER_2B_ROUTED_DEPTH.items():
         s = prof["per_dataset"].get(name)
         if s is None:
