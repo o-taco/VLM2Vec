@@ -1,0 +1,115 @@
+{
+  "gpu": "Tesla V100-SXM2-32GB",
+  "per_dataset": {
+    "N24News": {
+      "n_choices": 24,
+      "mean_depth": 14.21,
+      "full_ms": 188.28496237595877,
+      "routed_ms": 124.29963028927644,
+      "speedup": 1.5147668737048727,
+      "depth_proxy_speedup": 1.9704433497536944,
+      "fit_residual_ms": 2.618056757770148,
+      "gen_ms": 248.44557469089827,
+      "gen_over_routed": 1.998763585319627
+    },
+    "HatefulMemes": {
+      "n_choices": 2,
+      "mean_depth": 22.56,
+      "full_ms": 157.3717868576447,
+      "routed_ms": 138.22116482754546,
+      "speedup": 1.1385505762015022,
+      "depth_proxy_speedup": 1.2411347517730498,
+      "fit_residual_ms": 5.590410880870877,
+      "gen_ms": 197.01663218438625,
+      "gen_over_routed": 1.425372390908427
+    },
+    "VOC2007": {
+      "n_choices": 20,
+      "mean_depth": 12.59,
+      "full_ms": 183.7022501975298,
+      "routed_ms": 115.7189876275758,
+      "speedup": 1.5874858047388725,
+      "depth_proxy_speedup": 2.2239872915011913,
+      "fit_residual_ms": 0.6293310207270721,
+      "gen_ms": 242.2306348880132,
+      "gen_over_routed": 2.0932661083036446
+    },
+    "ImageNet-A": {
+      "n_choices": 200,
+      "mean_depth": 17.51,
+      "full_ms": 586.688536653916,
+      "routed_ms": 388.34754695494973,
+      "speedup": 1.5107306361380848,
+      "depth_proxy_speedup": 1.5990862364363219,
+      "fit_residual_ms": 1.113653150257079,
+      "gen_ms": 738.5394519815842,
+      "gen_over_routed": 1.9017487242355582
+    },
+    "ImageNet-R": {
+      "n_choices": 200,
+      "mean_depth": 12.96,
+      "full_ms": 587.3581596960624,
+      "routed_ms": 303.2773769001166,
+      "speedup": 1.936702848394481,
+      "depth_proxy_speedup": 2.1604938271604937,
+      "fit_residual_ms": 1.2923407929602035,
+      "gen_ms": 743.888775507609,
+      "gen_over_routed": 2.4528330570222727
+    },
+    "ObjectNet": {
+      "n_choices": 113,
+      "mean_depth": 12.08,
+      "full_ms": 342.40717341502506,
+      "routed_ms": 182.47409853835902,
+      "speedup": 1.8764700094849107,
+      "depth_proxy_speedup": 2.3178807947019866,
+      "fit_residual_ms": 1.0263552662896416,
+      "gen_ms": 470.982355127732,
+      "gen_over_routed": 2.5810915571051516
+    },
+    "Country211": {
+      "n_choices": 211,
+      "mean_depth": 18.76,
+      "full_ms": 590.6472812096277,
+      "routed_ms": 415.4109554936489,
+      "speedup": 1.4218384792181005,
+      "depth_proxy_speedup": 1.4925373134328357,
+      "fit_residual_ms": 1.3746744199167864,
+      "gen_ms": 781.4468588680029,
+      "gen_over_routed": 1.8811416707568036
+    },
+    "A-OKVQA": {
+      "n_choices": 4,
+      "mean_depth": 14.53,
+      "full_ms": 163.58130698402724,
+      "routed_ms": 113.92563717315593,
+      "speedup": 1.4358603650853363,
+      "depth_proxy_speedup": 1.9270474879559534,
+      "fit_residual_ms": 1.0461647486930303,
+      "gen_ms": 203.78815134366354,
+      "gen_over_routed": 1.788782195125451
+    },
+    "Visual7W": {
+      "n_choices": 4,
+      "mean_depth": 15.2,
+      "full_ms": 162.26277351379395,
+      "routed_ms": 115.08146154383817,
+      "speedup": 1.409981862734537,
+      "depth_proxy_speedup": 1.842105263157895,
+      "fit_residual_ms": 1.2207055247231295,
+      "gen_ms": 198.59795632461706,
+      "gen_over_routed": 1.7257163200778851
+    },
+    "ScienceQA": {
+      "n_choices": 3,
+      "mean_depth": 16.51,
+      "full_ms": 163.24830166995525,
+      "routed_ms": 120.73498658960064,
+      "speedup": 1.3521209243586105,
+      "depth_proxy_speedup": 1.6959418534221682,
+      "fit_residual_ms": 1.4963371291093353,
+      "gen_ms": 202.8472432245811,
+      "gen_over_routed": 1.6801032488958183
+    }
+  }
+}
