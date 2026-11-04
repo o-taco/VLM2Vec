@@ -1,0 +1,359 @@
+{
+ "pool": "5-domain (A-OKVQA, CUB-200, ScienceQA, ImageNet, iNaturalist), 8192 rows, 1024 updates",
+ "seeds": [
+  26091615,
+  26091616,
+  26091617
+ ],
+ "n_layers": 28,
+ "methods": {
+  "main": {
+   "classification": {
+    "final_acc": {
+     "mean": 60.518,
+     "std": 0.082,
+     "per_seed": [
+      60.589,
+      60.429,
+      60.536
+     ]
+    },
+    "routed_acc": {
+     "mean": 59.131,
+     "std": 0.332,
+     "per_seed": [
+      58.857,
+      59.036,
+      59.5
+     ]
+    },
+    "mean_depth": {
+     "mean": 13.355,
+     "std": 0.372,
+     "per_seed": [
+      13.205,
+      13.082,
+      13.778
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 57.497,
+     "std": 0.858,
+     "per_seed": [
+      58.095,
+      56.514,
+      57.882
+     ]
+    }
+   },
+   "vqa": {
+    "final_acc": {
+     "mean": 84.167,
+     "std": 0.22,
+     "per_seed": [
+      84.333,
+      83.917,
+      84.25
+     ]
+    },
+    "routed_acc": {
+     "mean": 81.417,
+     "std": 0.363,
+     "per_seed": [
+      81.167,
+      81.833,
+      81.25
+     ]
+    },
+    "mean_depth": {
+     "mean": 13.969,
+     "std": 0.314,
+     "per_seed": [
+      13.677,
+      14.301,
+      13.93
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 76.753,
+     "std": 0.121,
+     "per_seed": [
+      76.873,
+      76.631,
+      76.755
+     ]
+    }
+   },
+   "all": {
+    "final_acc": {
+     "mean": 67.612,
+     "std": 0.123,
+     "per_seed": [
+      67.713,
+      67.475,
+      67.65
+     ]
+    },
+    "routed_acc": {
+     "mean": 65.817,
+     "std": 0.243,
+     "per_seed": [
+      65.55,
+      65.875,
+      66.025
+     ]
+    },
+    "mean_depth": {
+     "mean": 13.539,
+     "std": 0.252,
+     "per_seed": [
+      13.346,
+      13.448,
+      13.824
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 63.274,
+     "std": 0.634,
+     "per_seed": [
+      63.728,
+      62.549,
+      63.544
+     ]
+    }
+   }
+  },
+  "main_maxprob": {
+   "classification": {
+    "final_acc": {
+     "mean": 60.518,
+     "std": 0.082,
+     "per_seed": [
+      60.589,
+      60.429,
+      60.536
+     ]
+    },
+    "routed_acc": {
+     "mean": 59.53,
+     "std": 0.257,
+     "per_seed": [
+      59.821,
+      59.339,
+      59.429
+     ]
+    },
+    "mean_depth": {
+     "mean": 12.078,
+     "std": 0.501,
+     "per_seed": [
+      12.287,
+      12.442,
+      11.507
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 53.565,
+     "std": 0.291,
+     "per_seed": [
+      53.883,
+      53.312,
+      53.499
+     ]
+    }
+   },
+   "vqa": {
+    "final_acc": {
+     "mean": 84.167,
+     "std": 0.22,
+     "per_seed": [
+      84.333,
+      83.917,
+      84.25
+     ]
+    },
+    "routed_acc": {
+     "mean": 77.653,
+     "std": 0.457,
+     "per_seed": [
+      78.167,
+      77.292,
+      77.5
+     ]
+    },
+    "mean_depth": {
+     "mean": 8.978,
+     "std": 0.28,
+     "per_seed": [
+      8.857,
+      9.297,
+      8.779
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 69.466,
+     "std": 0.297,
+     "per_seed": [
+      69.808,
+      69.316,
+      69.275
+     ]
+    }
+   },
+   "all": {
+    "final_acc": {
+     "mean": 67.612,
+     "std": 0.123,
+     "per_seed": [
+      67.713,
+      67.475,
+      67.65
+     ]
+    },
+    "routed_acc": {
+     "mean": 64.967,
+     "std": 0.317,
+     "per_seed": [
+      65.325,
+      64.725,
+      64.85
+     ]
+    },
+    "mean_depth": {
+     "mean": 11.148,
+     "std": 0.416,
+     "per_seed": [
+      11.258,
+      11.499,
+      10.688
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 58.335,
+     "std": 0.288,
+     "per_seed": [
+      58.66,
+      58.113,
+      58.232
+     ]
+    }
+   }
+  },
+  "main_margin": {
+   "classification": {
+    "final_acc": {
+     "mean": 60.518,
+     "std": 0.082,
+     "per_seed": [
+      60.589,
+      60.429,
+      60.536
+     ]
+    },
+    "routed_acc": {
+     "mean": 59.464,
+     "std": 0.259,
+     "per_seed": [
+      59.732,
+      59.214,
+      59.446
+     ]
+    },
+    "mean_depth": {
+     "mean": 11.656,
+     "std": 0.453,
+     "per_seed": [
+      11.292,
+      12.164,
+      11.513
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 53.54,
+     "std": 0.252,
+     "per_seed": [
+      53.587,
+      53.268,
+      53.766
+     ]
+    }
+   },
+   "vqa": {
+    "final_acc": {
+     "mean": 84.167,
+     "std": 0.22,
+     "per_seed": [
+      84.333,
+      83.917,
+      84.25
+     ]
+    },
+    "routed_acc": {
+     "mean": 79.639,
+     "std": 0.168,
+     "per_seed": [
+      79.458,
+      79.667,
+      79.792
+     ]
+    },
+    "mean_depth": {
+     "mean": 9.643,
+     "std": 0.278,
+     "per_seed": [
+      9.329,
+      9.86,
+      9.738
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 70.93,
+     "std": 0.623,
+     "per_seed": [
+      70.322,
+      70.901,
+      71.568
+     ]
+    }
+   },
+   "all": {
+    "final_acc": {
+     "mean": 67.612,
+     "std": 0.123,
+     "per_seed": [
+      67.713,
+      67.475,
+      67.65
+     ]
+    },
+    "routed_acc": {
+     "mean": 65.517,
+     "std": 0.153,
+     "per_seed": [
+      65.65,
+      65.35,
+      65.55
+     ]
+    },
+    "mean_depth": {
+     "mean": 11.052,
+     "std": 0.39,
+     "per_seed": [
+      10.703,
+      11.473,
+      10.981
+     ]
+    },
+    "random_matched_acc": {
+     "mean": 58.757,
+     "std": 0.303,
+     "per_seed": [
+      58.608,
+      58.558,
+      59.106
+     ]
+    }
+   }
+  }
+ }
+}
