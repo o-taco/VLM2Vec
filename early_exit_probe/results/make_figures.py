@@ -3,10 +3,12 @@
 First run (needs outputs/ on this box) extracts the curves into figure_data.json; later runs
 rebuild every figure from that file alone, so the figures survive losing outputs/.
 
-    python early_exit_probe/results/make_figures.py
+    python early_exit_probe/results/make_figures.py            # 3-domain pool
+    python early_exit_probe/results/make_figures.py --pool 5d  # 5-domain pool (no latency figure)
 """
 from __future__ import annotations
 
+import argparse
 import glob
 import json
 from pathlib import Path
@@ -19,7 +21,6 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 OUTPUTS = HERE.parent / "outputs"
-DATA = HERE / "figure_data.json"
 FIG = HERE / "figures"
 D = 28
 MATCHED = (11.2, 14.0, 15.7)  # 40%, 50%, 56% of layers (56% = paper's 2B routed depth)
@@ -51,9 +52,10 @@ plt.rcParams.update({
 })
 
 
-def extract():
+def extract(prefix, latency=True):
     data = {"runs": {}}
     for name, d in RUNS.items():
+        d = d.replace("repro2b_el_", prefix, 1)
         f = sorted(glob.glob(str(OUTPUTS / d / "checkpoint-*" / "baselines" / "sha200.json")))[-1]
         r = json.load(open(f))
         run = {"main": r["main"]["summary"]["all"],
@@ -63,10 +65,11 @@ def extract():
                                 ("mean_depth", "routed_acc", "random_matched_acc")}}
                               for x in r["sweeps"][p]] for p in POLICY}}
         data["runs"][name] = run
+    if not latency:
+        return data
     lat = OUTPUTS / RUNS["Main (seed 1)"] / "checkpoint-939" / "latency"
     data["paper_latency"] = json.load(open(lat / "paper_2b_estimate.json"))
     data["halting"] = json.load(open(lat / "halting_bs1.json"))
-    json.dump(data, open(DATA, "w"), indent=1)
     return data
 
 
@@ -85,10 +88,13 @@ def static_at(run, d):
     return float(np.interp(d, [int(k) for k in s], list(s.values())))
 
 
+SUFFIX = ""  # "_5d" for the 5-domain pool
+
+
 def save(fig, name):
     FIG.mkdir(exist_ok=True)
     for ext in ("pdf", "png"):
-        fig.savefig(FIG / f"{name}.{ext}")
+        fig.savefig(FIG / f"{name}{SUFFIX}.{ext}")
     plt.close(fig)
 
 
@@ -129,6 +135,8 @@ def fig_ablations(data):
     runs = data["runs"]
     fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.3), sharey=True)
     names = ABLATIONS[::-1]
+    vals = [at_depth(runs[n], p, d) for n in names for p in ("agreement", "margin") for d in MATCHED]
+    xlo = min(59, np.floor(np.nanmin(vals)) - 1)  # 59 unless a point would fall off the axis
     for ax, d in zip(axes, MATCHED):
         seed_vals = [at_depth(runs[s], "agreement", d) for s in SEEDS]
         lo, hi, mu = min(seed_vals), max(seed_vals), np.mean(seed_vals)
@@ -141,11 +149,11 @@ def fig_ablations(data):
                 ax.plot(a, i, "o", color=BLUE, ms=5, mec="white", mew=0.6, zorder=3)
                 ax.text(a, i + 0.28, f"{a - mu:+.1f}", ha="center", fontsize=6, color=INK2)
             else:
-                ax.text(60.5, i, "never exits\nthis early", fontsize=6, color=MUTED, va="center")
+                ax.text(xlo + 0.5 if np.isnan(m) else m + 0.6, i, "agreement never\nexits this early", fontsize=6, color=MUTED, va="center")
             if not np.isnan(m):
                 ax.plot(m, i, "s", mfc="none", mec=ORANGE, ms=4.5, mew=1.1, zorder=3)
         ax.set_title(f"{d:g} layers ({100 * d / D:.0f}%)")
-        ax.set_xlim(59, 68)
+        ax.set_xlim(xlo, 68.5 if xlo < 59 else 68)
         ax.grid(axis="y", visible=False)
         ax.set_xlabel("Accuracy (%)")
     axes[0].set_yticks(range(len(names)), names)
@@ -231,18 +239,29 @@ def tables(data):
               f"Matched depths {', '.join(f'{d:g}' for d in MATCHED)} = "
               f"{', '.join(f'{100 * d / D:.0f}%' for d in MATCHED)} of 28 layers.")
     tex += [r"\bottomrule", r"\end{tabular}"]
-    (HERE / "table_ablations.md").write_text("\n".join(md) + "\n")
-    (HERE / "table_ablations.tex").write_text("\n".join(tex) + "\n")
+    (HERE / f"table_ablations{SUFFIX}.md").write_text("\n".join(md) + "\n")
+    (HERE / f"table_ablations{SUFFIX}.tex").write_text("\n".join(tex) + "\n")
 
 
 def main():
-    data = extract() if OUTPUTS.exists() and (OUTPUTS / RUNS["Main (seed 1)"]).exists() else json.load(open(DATA))
+    global SUFFIX
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--pool", choices=("3d", "5d"), default="3d")
+    five = ap.parse_args().pool == "5d"
+    SUFFIX, prefix = ("_5d", "repro2b_el5d_") if five else ("", "repro2b_el_")
+    data_file = HERE / f"figure_data{SUFFIX}.json"
+    if OUTPUTS.exists() and (OUTPUTS / RUNS["Main (seed 1)"].replace("repro2b_el_", prefix, 1)).exists():
+        data = extract(prefix, latency=not five)
+        json.dump(data, open(data_file, "w"), indent=1)
+    else:
+        data = json.load(open(data_file))
     fig_tradeoff(data)
     fig_ablations(data)
     fig_layers(data)
-    fig_latency(data)
+    if not five:
+        fig_latency(data)
     tables(data)
-    print(f"wrote {FIG}/fig1-4 (.pdf/.png), table_ablations.md/.tex, {DATA.name}")
+    print(f"wrote {FIG}/fig1-{3 if five else 4}{SUFFIX} (.pdf/.png), table_ablations{SUFFIX}.md/.tex, {data_file.name}")
 
 
 if __name__ == "__main__":
